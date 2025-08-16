@@ -1,0 +1,517 @@
+// server.js
+const express = require("express");
+const bodyParser = require("body-parser");
+const path = require("path");
+const app = express();
+const sqlite3 = require("sqlite3").verbose();
+const db = new sqlite3.Database("./database.db");
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept",
+    );
+    next();
+});
+app.use((err, req, res, next) => {
+    console.error("Server error:", {
+        url: req.originalUrl,
+        method: req.method,
+        body: req.body,
+        error: err.stack,
+    });
+    res.status(500).json({ error: "حدث خطأ في الخادم" });
+});
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+// تعيين محرك العرض
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "html");
+db.serialize(() => {
+    // جدول المشتركين
+    db.run(`CREATE TABLE IF NOT EXISTS subscribers (
+      subscriber_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      subscription_type TEXT NOT NULL,
+      meals_deducted INTEGER DEFAULT 0,
+      meals_remaining INTEGER NOT NULL,
+      status TEXT NOT NULL
+  )`);
+
+    // جدول سجل الوجبات
+    db.run(`CREATE TABLE IF NOT EXISTS meal_logs (
+      log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      subscriber_id INTEGER NOT NULL,
+      subscriber_name TEXT NOT NULL,
+      subscription_type TEXT NOT NULL,
+      meals_deducted INTEGER NOT NULL,
+      meals_remaining INTEGER NOT NULL,
+      user TEXT NOT NULL,
+      FOREIGN KEY (subscriber_id) REFERENCES subscribers(subscriber_id)
+  )`);
+
+    // جدول قائمة الطعام
+    db.run(`CREATE TABLE IF NOT EXISTS menu (
+      item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_name TEXT NOT NULL,
+      price REAL NOT NULL
+  )`);
+
+    // جدول الباقات
+    db.run(`CREATE TABLE IF NOT EXISTS packages (
+      package_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      package_name TEXT NOT NULL,
+      price REAL NOT NULL,
+      meals_count INTEGER NOT NULL,
+      subscription_days INTEGER NOT NULL
+  )`);
+
+    // جدول طلبات الاشتراك
+    db.run(`CREATE TABLE IF NOT EXISTS orders (
+      order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      subscription_type TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'قيد الانتظار'
+  )`);
+
+    // جدول المستخدمين
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL
+  )`);
+});
+
+// إضافة مستخدم افتراضي
+db.run(
+    `INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)`,
+    ["admin", "admin123"],
+    (err) => {
+        if (err) {
+            console.error("Error creating default user:", err);
+        }
+    },
+);
+// Routes
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// API Routes
+// المشتركين
+app.get("/api/subscribers", (req, res) => {
+    const search = req.query.search || "";
+    db.all(
+        `SELECT * FROM subscribers 
+         WHERE name LIKE ? OR phone LIKE ?`,
+        [`%${search}%`, `%${search}%`],
+        (err, rows) => {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json(rows);
+        },
+    );
+});
+
+app.post("/api/subscribers", (req, res) => {
+    const {
+        name,
+        phone,
+        start_date,
+        end_date,
+        subscription_type,
+        meals_remaining,
+        status,
+    } = req.body;
+
+    db.run(
+        `INSERT INTO subscribers (name, phone, start_date, end_date, subscription_type, meals_remaining, status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+            name,
+            phone,
+            start_date,
+            end_date,
+            subscription_type,
+            meals_remaining || 0,
+            status,
+        ],
+        function (err) {
+            if (err) {
+                console.error("Error adding subscriber:", err);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                subscriber_id: this.lastID,
+            });
+        },
+    );
+});
+
+// قائمة الطعام
+app.get("/api/menu", (req, res) => {
+    db.all("SELECT * FROM menu", (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+app.post("/api/menu", (req, res) => {
+    const { item_name, price } = req.body;
+    db.run(
+        "INSERT INTO menu (item_name, price) VALUES (?, ?)",
+        [item_name, price],
+        function (err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ id: this.lastID });
+        },
+    );
+});
+
+// الباقات
+app.get("/api/packages", (req, res) => {
+    const search = req.query.search || "";
+    db.all(
+        `SELECT * FROM packages WHERE package_name LIKE ?`,
+        [`%${search}%`],
+        (err, rows) => {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json(rows);
+        },
+    );
+});
+
+app.post("/api/packages", (req, res) => {
+    const { package_name, price, meals_count, subscription_days } = req.body;
+    db.run(
+        `INSERT INTO packages (package_name, price, meals_count, subscription_days) 
+         VALUES (?, ?, ?, ?)`,
+        [package_name, price, meals_count, subscription_days],
+        function (err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ id: this.lastID });
+        },
+    );
+});
+
+// طلبات الاشتراك
+app.get("/api/orders", (req, res) => {
+    db.all(
+        "SELECT * FROM orders WHERE status = ?",
+        ["قيد الانتظار"],
+        (err, rows) => {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json(rows);
+        },
+    );
+});
+
+app.post("/api/orders/approve", (req, res) => {
+    const { order_id } = req.body;
+    // هنا يمكنك إضافة منطق الموافقة على الطلب
+    // مثل إنشاء مشترك جديد بناءً على الطلب
+    res.json({ success: true });
+});
+
+// الإحصائيات
+app.get("/api/stats", (req, res) => {
+    db.get("SELECT COUNT(*) as total FROM subscribers", (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        const totalSubscribers = row.total;
+
+        db.get(
+            "SELECT COUNT(*) as active FROM subscribers WHERE status = ?",
+            ["نشط"],
+            (err, row) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                const activeSubscribers = row.active;
+
+                db.get(
+                    `SELECT subscription_type as popular FROM subscribers 
+                   GROUP BY subscription_type ORDER BY COUNT(*) DESC LIMIT 1`,
+                    (err, row) => {
+                        if (err) {
+                            res.status(500).json({ error: err.message });
+                            return;
+                        }
+                        const popularPackage = row
+                            ? row.popular
+                            : "لا يوجد بيانات";
+
+                        res.json({
+                            totalSubscribers,
+                            activeSubscribers,
+                            popularPackage,
+                        });
+                    },
+                );
+            },
+        );
+    });
+});
+// الحصول على الباقات لاستخدامها في واجهة إضافة المشترك
+app.get("/api/packages/list", (req, res) => {
+    db.all("SELECT * FROM packages", (err, rows) => {
+        if (err) {
+            console.error("Database error:", err); // إضافة تسجيل للخطأ
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        console.log("Packages sent:", rows); // تسجيل البيانات المرسلة
+        res.json(rows);
+    });
+});
+app.put("/api/subscribers/:id", (req, res) => {
+    const {
+        name,
+        phone,
+        start_date,
+        end_date,
+        subscription_type,
+        meals_remaining,
+        status,
+    } = req.body;
+
+    db.run(
+        `UPDATE subscribers SET 
+         name = ?, 
+         phone = ?, 
+         start_date = ?, 
+         end_date = ?, 
+         subscription_type = ?, 
+         meals_remaining = ?, 
+         status = ? 
+         WHERE subscriber_id = ?`,
+        [
+            name,
+            phone,
+            start_date,
+            end_date,
+            subscription_type,
+            meals_remaining,
+            status,
+            req.params.id,
+        ],
+        function (err) {
+            if (err) {
+                console.error("Error updating subscriber:", err);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                changes: this.changes,
+            });
+        },
+    );
+});
+
+// الحصول على بيانات مشترك معين
+app.get("/api/subscribers/:id", (req, res) => {
+    db.get(
+        "SELECT * FROM subscribers WHERE subscriber_id = ?",
+        [req.params.id],
+        (err, row) => {
+            if (err) {
+                console.error("Error fetching subscriber:", err);
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            if (!row) {
+                res.status(404).json({ error: "المشترك غير موجود" });
+                return;
+            }
+            res.json(row);
+        },
+    );
+});
+app.delete("/api/subscribers/:id", (req, res) => {
+    db.run(
+        "DELETE FROM subscribers WHERE subscriber_id = ?",
+        [req.params.id],
+        function (err) {
+            if (err) {
+                console.error("Error deleting subscriber:", err);
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            if (this.changes === 0) {
+                res.status(404).json({ error: "المشترك غير موجود" });
+                return;
+            }
+            res.json({ success: true, changes: this.changes });
+        },
+    );
+});
+app.post("/api/subscribers/:id/deduct-meal", (req, res) => {
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+
+        // 1. التحقق من وجود وجبات متبقية
+        db.get(
+            "SELECT meals_remaining FROM subscribers WHERE subscriber_id = ?",
+            [req.params.id],
+            (err, row) => {
+                if (err) {
+                    db.run("ROLLBACK");
+                    console.error("Error checking meals:", err);
+                    return res.status(500).json({ error: err.message });
+                }
+
+                if (!row || row.meals_remaining <= 0) {
+                    db.run("ROLLBACK");
+                    return res
+                        .status(400)
+                        .json({ error: "لا توجد وجبات متبقية لهذا المشترك" });
+                }
+
+                // 2. خصم وجبة
+                db.run(
+                    "UPDATE subscribers SET meals_remaining = meals_remaining - 1 WHERE subscriber_id = ?",
+                    [req.params.id],
+                    function (err) {
+                        if (err) {
+                            db.run("ROLLBACK");
+                            console.error("Error deducting meal:", err);
+                            return res.status(500).json({ error: err.message });
+                        }
+
+                        // 3. تسجيل العملية في سجل الوجبات
+                        const logData = {
+                            date: new Date().toISOString(),
+                            subscriber_id: req.params.id,
+                            subscriber_name: req.body.subscriber_name,
+                            subscription_type: req.body.subscription_type,
+                            meals_deducted: 1,
+                            meals_remaining: row.meals_remaining - 1,
+                            user: "System",
+                        };
+
+                        db.run(
+                            `INSERT INTO meal_logs (date, subscriber_id, subscriber_name, subscription_type, meals_deducted, meals_remaining, user) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                            Object.values(logData),
+                            function (err) {
+                                if (err) {
+                                    db.run("ROLLBACK");
+                                    console.error(
+                                        "Error logging meal deduction:",
+                                        err,
+                                    );
+                                    return res
+                                        .status(500)
+                                        .json({ error: err.message });
+                                }
+
+                                db.run("COMMIT");
+                                res.json({
+                                    success: true,
+                                    meals_remaining: logData.meals_remaining,
+                                    log_id: this.lastID,
+                                });
+                            },
+                        );
+                    },
+                );
+            },
+        );
+    });
+});
+app.get("/api/packages/:id", (req, res) => {
+    db.get(
+        "SELECT * FROM packages WHERE package_id = ?",
+        [req.params.id],
+        (err, row) => {
+            if (err) {
+                console.error("Error fetching package:", err);
+                return res.status(500).json({ error: err.message });
+            }
+            if (!row) {
+                return res.status(404).json({ error: "الباقة غير موجودة" });
+            }
+            res.json(row);
+        },
+    );
+});
+
+// تحديث باقة
+app.put("/api/packages/:id", (req, res) => {
+    const { package_name, price, meals_count, subscription_days } = req.body;
+
+    db.run(
+        `UPDATE packages SET 
+         package_name = ?, 
+         price = ?, 
+         meals_count = ?, 
+         subscription_days = ? 
+         WHERE package_id = ?`,
+        [package_name, price, meals_count, subscription_days, req.params.id],
+        function (err) {
+            if (err) {
+                console.error("Error updating package:", err);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                changes: this.changes,
+            });
+        },
+    );
+});
+
+// حذف باقة
+app.delete("/api/packages/:id", (req, res) => {
+    db.run(
+        "DELETE FROM packages WHERE package_id = ?",
+        [req.params.id],
+        function (err) {
+            if (err) {
+                console.error("Error deleting package:", err);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                changes: this.changes,
+            });
+        },
+    );
+});
+// بدء الخادم
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
