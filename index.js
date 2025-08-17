@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const app = express();
 const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database("./database.db");
+const db = new sqlite3.Database("/root/n8n-docker/app_data/database.db");
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
