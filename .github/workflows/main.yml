@@ -1,27 +1,30 @@
-name: cicd-workflow to create docker image and upload into Dockerhub
+name: Docker Image CI
+
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
-  job1:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
+    - uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
       with:
-        distribution: 'adopt'
-        java-version: '17'
-    - name: Build with Maven
-      run: mvn clean install
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build and push Docker image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
+        username: issashergy
+        password: Django22@#
+
+    - name: Build the Docker image
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/resturant:${IMAGE_TAG} .
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/resturant:${IMAGE_TAG}
+        IMAGE_TAG=$(date +%s)
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        docker build . --file Dockerfile --tag issashergy/newstartimage:latest
+
+    - name: Push the Docker image
+      run: |
+        docker push issashergy/newstartimage:latest
