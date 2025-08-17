@@ -105,9 +105,11 @@ db.run(
 );
 // Routes
 app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "login.html"));
+});
+app.get("/index", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
-
 // API Routes
 // المشتركين
 app.get("/api/subscribers", (req, res) => {
@@ -378,6 +380,9 @@ app.delete("/api/subscribers/:id", (req, res) => {
     );
 });
 app.post("/api/subscribers/:id/deduct-meal", (req, res) => {
+    // الحصول على اسم المستخدم من الجسم أو من بيانات الجلسة
+   const username = req.body.username || req.user?.username || "System";
+    
     db.serialize(() => {
         db.run("BEGIN TRANSACTION");
 
@@ -418,7 +423,7 @@ app.post("/api/subscribers/:id/deduct-meal", (req, res) => {
                             subscription_type: req.body.subscription_type,
                             meals_deducted: 1,
                             meals_remaining: row.meals_remaining - 1,
-                            user: "System",
+                            user: username, // استخدام اسم المستخدم الفعلي هنا
                         };
 
                         db.run(
@@ -509,6 +514,210 @@ app.delete("/api/packages/:id", (req, res) => {
             });
         },
     );
+});
+app.get("/api/subscribers/:id/report", (req, res) => {
+    const subscriberId = req.params.id;
+    
+    // جلب بيانات المشترك الأساسية
+    db.get("SELECT * FROM subscribers WHERE subscriber_id = ?", [subscriberId], (err, subscriber) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (!subscriber) {
+            return res.status(404).json({ error: "المشترك غير موجود" });
+        }
+        
+        // جلب سجل الوجبات للمشترك
+        db.all("SELECT * FROM meal_logs WHERE subscriber_id = ? ORDER BY date DESC", [subscriberId], (err, mealLogs) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            
+            // جلب إجمالي الوجبات المخصومة
+            db.get("SELECT SUM(meals_deducted) AS total_deducted FROM meal_logs WHERE subscriber_id = ?", [subscriberId], (err, total) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                
+                res.json({
+                    subscriber,
+                    mealLogs: mealLogs || [],
+                    totalDeducted: total.total_deducted || 0,
+                    mealsRemaining: subscriber.meals_remaining
+                });
+            });
+        });
+    });
+});
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'اسم المستخدم وكلمة المرور مطلوبان' 
+        });
+    }
+    
+    // البحث عن المستخدم في قاعدة البيانات
+    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'خطأ في الخادم' 
+            });
+        }
+        
+        if (!user) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'اسم المستخدم غير صحيح' 
+            });
+        }
+        
+        // التحقق من كلمة المرور
+        if (user.password !== password) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'كلمة المرور غير صحيحة' 
+            });
+        }
+        
+        // عند نجاح عملية الدخول
+        res.json({
+            success: true,
+            message: 'تم تسجيل الدخول بنجاح',
+            user: {
+                user_id: user.user_id,
+                username: user.username,
+                role: user.role || 'مدير النظام'
+            }
+        });
+    });
+});
+app.get('/api/users', (req, res) => {
+  const search = (req.query.search || '').trim();
+
+  let sql = `SELECT user_id, username FROM users`;
+  let params = [];
+
+  // إذا فيه كلمة بحث، نبحث باليوزرنيم وبـ user_id (كنص)
+  if (search !== '') {
+    sql += ` WHERE username LIKE ? OR CAST(user_id AS TEXT) LIKE ?`;
+    const like = `%${search}%`;
+    params = [like, like];
+  }
+
+  db.all(sql, params, (err, rows) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'خطأ في الخادم' });
+    }
+    res.json(rows);
+  });
+});
+// إضافة مستخدم جديد
+app.post('/api/users', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
+    }
+    
+    db.run(
+        'INSERT INTO users (username, password) VALUES (?, ?)',
+        [username, password],
+        function(err) {
+            if (err) {
+                if (err.message.includes('UNIQUE constraint failed')) {
+                    return res.status(400).json({ error: 'اسم المستخدم موجود مسبقاً' });
+                }
+                console.error('Database error:', err);
+                return res.status(500).json({ error: 'خطأ في الخادم' });
+            }
+            
+            res.json({
+                success: true,
+                user_id: this.lastID
+            });
+        }
+    );
+});
+
+// تحديث مستخدم
+app.put('/api/users/:id', (req, res) => {
+    const userId = req.params.id;
+    const { username, password} = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ error: 'اسم المستخدم ' });
+    }
+    
+    let query = 'UPDATE users SET username = ?';
+    let params = [username];
+    
+    if (password) {
+        query += ', password = ?';
+        params.push(password);
+    }
+    
+    query += ' WHERE user_id = ?';
+    params.push(userId);
+    
+    db.run(query, params, function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE constraint failed')) {
+                return res.status(400).json({ error: 'اسم المستخدم موجود مسبقاً' });
+            }
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'خطأ في الخادم' });
+        }
+        
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'المستخدم غير موجود' });
+        }
+        
+        res.json({ success: true });
+    });
+});
+
+// حذف مستخدم
+app.delete('/api/users/:id', (req, res) => {
+    const userId = req.params.id;
+    
+    db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err) {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'خطأ في الخادم' });
+        }
+        
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'المستخدم غير موجود' });
+        }
+        
+        res.json({ success: true });
+    });
+});
+
+// جلب بيانات مستخدم معين
+app.get('/api/users/:id', (req, res) => {
+    const userId = req.params.id;
+    
+    db.get('SELECT * FROM users WHERE user_id = ?', [userId], (err, row) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'خطأ في الخادم' });
+        }
+        
+        if (!row) {
+            return res.status(404).json({ error: 'المستخدم غير موجود' });
+        }
+        
+        // لا نرسل كلمة المرور في الاستجابة
+        const { password, ...userData } = row;
+        res.json(userData);
+    });
 });
 // بدء الخادم
 const PORT = process.env.PORT || 3000;

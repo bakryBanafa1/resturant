@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - نظام إدارة الاشتراكات الغذائية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c786c;
+            --secondary: #004445;
+            --accent: #f8b400;
+            --light: #faf5e4;
+            --gray: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+            color: #333;
+            direction: rtl;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .login-header {
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 15px;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .login-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .login-form {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 40px;
+            color: var(--gray);
+            font-size: 18px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(44, 120, 108, 0.2);
+        }
+
+        .btn {
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 68, 69, 0.3);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .remember input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .forgot-password:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eee;
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .login-footer a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .login-container {
+                max-width: 100%;
+            }
+            
+            .login-form {
+                padding: 20px;
+            }
+            
+            .remember-forgot {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <h1>نظام <span>الاشتراكات</span></h1>
+            </div>
+            <p>سجل الدخول للوصول إلى لوحة التحكم</p>
+        </div>
+        
+        <div class="login-form">
+            <div id="alert" class="alert"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">اسم المستخدم</label>
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" required>
+                </div>
+                
+                <div class="remember-forgot">
+                    <div class="remember">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">تذكرني</label>
+                    </div>
+                    <a href="#" class="forgot-password">نسيت كلمة المرور؟</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                </button>
+            </form>
+        </div>
+        
+        <div class="login-footer">
+            © 2023 نظام إدارة الاشتراكات الغذائية. جميع الحقوق محفوظة.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            // إظهار حالة التحميل
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...';
+            
+            // إخفاء أي تنبيه سابق
+            const alertDiv = document.getElementById('alert');
+            alertDiv.style.display = 'none';
+            
+            try {
+                // إرسال بيانات الدخول إلى الخادم للتحقق
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // تسجيل الدخول ناجح
+                    alertDiv.textContent = 'تم تسجيل الدخول بنجاح! يتم التوجيه إلى لوحة التحكم...';
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.style.display = 'block';
+                    
+                    // حفظ حالة الجلسة
+                    if (remember) {
+                        localStorage.setItem('userSession', JSON.stringify(data.user));
+                    } else {
+                        sessionStorage.setItem('userSession', JSON.stringify(data.user));
+                    }
+                    
+                    // توجيه المستخدم إلى لوحة التحكم بعد تأخير قصير
+                    setTimeout(() => {
+                        window.location.href = '/index';
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
+                }
+            } catch (error) {
+                // تسجيل الدخول فاشل
+                alertDiv.textContent = error.message;
+                alertDiv.className = 'alert alert-error';
+                alertDiv.style.display = 'block';
+                
+                // إعادة تفعيل زر تسجيل الدخول
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+            }
+        });
+        
+        // تأثيرات تفاعلية للحقول
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.querySelector('.input-icon').style.color = '#2c786c';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.querySelector('.input-icon').style.color = '#6c757d';
+            });
+        });
+        
+        // التحقق من الجلسة المحفوظة عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
+            if (savedSession) {
+                document.getElementById('username').value = JSON.parse(savedSession).username;
+                document.getElementById('remember').checked = true;
+            }
+        });
+    </script>
+</body>
+</html>

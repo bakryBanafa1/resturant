@@ -14,8 +14,7 @@
         />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-            /* أنماط CSS كما هي في الكود السابق */
-            /* تم الحفاظ على نفس الأنماط دون تغيير */
+            /* أنماط CSS معدلة */
             :root {
                 --primary: #2c786c;
                 --secondary: #004445;
@@ -38,15 +37,17 @@
                 color: #333;
                 direction: rtl;
                 min-height: 100vh;
+                overflow-x: hidden;
             }
 
             .container {
                 display: grid;
                 grid-template-columns: 250px 1fr;
                 min-height: 100vh;
+                transition: all 0.3s ease;
             }
 
-            /* الشريط الجانبي */
+            /* الشريط الجانبي - تم التعديل */
             .sidebar {
                 background: linear-gradient(
                     to bottom,
@@ -56,12 +57,31 @@
                 color: white;
                 padding: 20px 0;
                 box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+                position: relative;
+                z-index: 100;
+                overflow-y: auto;
+            }
+
+            /* زر القائمة للجوال */
+            .menu-toggle {
+                display: none;
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                z-index: 1000;
+                cursor: pointer;
             }
 
             .logo {
                 text-align: center;
                 padding: 20px 0;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                position: relative;
             }
 
             .logo h1 {
@@ -100,6 +120,7 @@
             .main-content {
                 padding: 20px;
                 overflow-y: auto;
+                transition: all 0.3s ease;
             }
 
             .header {
@@ -422,14 +443,40 @@
                 animation: fadeIn 0.5s ease-out;
             }
 
-            /* التكيف مع الشاشات الصغيرة */
+            /* التكيف مع الشاشات الصغيرة - تم التعديل بشكل كبير */
             @media (max-width: 992px) {
                 .container {
                     grid-template-columns: 1fr;
                 }
 
+                .menu-toggle {
+                    display: block;
+                }
+
                 .sidebar {
-                    display: none;
+                    position: fixed;
+                    top: 0;
+                    right: -250px;
+                    width: 250px;
+                    height: 100%;
+                    z-index: 100;
+                    transition: right 0.3s ease;
+                }
+
+                .sidebar.active {
+                    right: 0;
+                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .main-content {
+                    width: 100%;
+                    padding: 70px 15px 15px;
+                }
+
+                .header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 15px;
                 }
 
                 .charts {
@@ -438,6 +485,32 @@
 
                 .form-row {
                     grid-template-columns: 1fr;
+                }
+
+                .user-info {
+                    align-self: flex-end;
+                }
+            }
+
+            @media (max-width: 576px) {
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .search-filter {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .search-filter input {
+                    width: 100% !important;
+                }
+
+                .section-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 15px;
                 }
             }
 
@@ -530,12 +603,110 @@
                     height: 3cm !important;
                 }
             }
+
+            /* طبقة الخلفية للقائمة الجانبية على الجوال */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 90;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+            .report-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.summary-table th, .summary-table td {
+    padding: 12px 15px;
+    text-align: right;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-table th {
+    background-color: #e9ecef;
+    width: 30%;
+}
+
+.meal-logs h4 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: var(--secondary);
+}
+#usersContent .table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#usersContent table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#usersContent th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+}
+
+#userModal .form-group {
+    margin-bottom: 20px;
+}
+
+#userModal .form-control {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px 15px;
+    font-size: 1rem;
+}
+
+#userModal .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(44, 120, 108, 0.2);
+}
+
+@media (max-width: 768px) {
+    #usersContent .search-filter {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #usersContent .search-filter input {
+        width: 100% !important;
+    }
+}
         </style>
     </head>
     <body>
+        <!-- طبقة خلفية للقائمة الجانبية على الجوال -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- زر القائمة للجوال -->
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
         <div class="container">
             <!-- الشريط الجانبي -->
-            <div class="sidebar">
+            <div class="sidebar" id="sidebar">
                 <div class="logo">
                     <h1>نظام <span>الاشتراكات </span></h1>
                 </div>
@@ -546,10 +717,12 @@
                     <li id="subscribersTab">
                         <i class="fas fa-users"></i> المشتركين
                     </li>
+                   <!--
+<li id="menuTab">
+    <i class="fas fa-utensils"></i> قائمة الطعام
+</li>
+-->
 
-                    <li id="menuTab">
-                        <i class="fas fa-utensils"></i>قائمة الطعام
-                    </li>
                     <li id="packagesTab">
                         <i class="fas fa-box-open"></i> الباقات
                     </li>
@@ -560,6 +733,9 @@
                         <i class="fas fa-chart-bar"></i>
                         <span>التقارير</span>
                     </li>
+                    <li id="usersTab">
+    <i class="fas fa-users-cog"></i> إدارة المستخدمين
+</li>
                     <li><i class="fas fa-cog"></i>الإعدادات</li>
                 </ul>
             </div>
@@ -572,6 +748,9 @@
                         <div>
                             <h3>بكري محمد</h3>
                             <p>مدير النظام</p>
+                             <button class="btn btn-danger" onclick="logout()" style="margin-top: 5px; padding: 5px 10px;">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </button>
                         </div>
                         <img
                             src="https://randomuser.me/api/portraits/men/41.jpg"
@@ -819,34 +998,108 @@
                 </div>
                 <!-- قسم التقارير -->
                 <div id="reportsContent" class="section" style="display: none">
-                    <div class="section-header">
-                        <h3 class="section-title">التقارير</h3>
-                    </div>
+    <div class="section-header">
+        <h3 class="section-title">التقارير</h3>
+    </div>
 
-                    <div class="form-group">
-                        <label for="reportSubscriberId"
-                            >أدخل رقم المشترك:</label
-                        >
-                        <input
-                            type="text"
-                            id="reportSubscriberId"
-                            class="form-control"
-                            placeholder="مثال: 3"
-                        />
-                        <button
-                            class="btn btn-primary"
-                            onclick="generateReport()"
-                        >
-                            بحث
-                        </button>
-                    </div>
-
-                    <div id="reportResult" style="margin-top: 30px">
-                        <!-- سيتم عرض الإحصائية والتفاصيل هنا -->
-                    </div>
-                </div>
-            </div>
+    <div class="form-group">
+        <label for="reportSubscriberId">أدخل رقم المشترك:</label>
+        <div style="display: flex; gap: 10px;">
+            <input
+                type="text"
+                id="reportSubscriberId"
+                class="form-control"
+                placeholder="مثال: 3"
+                style="flex: 1;"
+            />
+            <button class="btn btn-primary" onclick="generateReport()">
+                بحث
+            </button>
         </div>
+    </div>
+
+    <div id="reportResult" style="margin-top: 30px">
+        <!-- سيتم عرض الإحصائية والتفاصيل هنا -->
+    </div>
+</div>
+<div id="usersContent" class="section" style="display: none">
+    <div class="section-header">
+        <h3 class="section-title">إدارة المستخدمين</h3>
+        <button class="btn btn-primary" id="addUserBtn">
+            <i class="fas fa-plus"></i> إضافة مستخدم جديد
+        </button>
+    </div>
+    
+    <div class="search-filter" style="margin-bottom: 15px">
+        <input
+            type="text"
+            id="userSearch"
+            class="form-control"
+            placeholder="ابحث باسم المستخدم أو الدور..."
+            style="width: 300px; display: inline-block"
+        />
+        <button class="btn btn-primary" onclick="filterUsers()">
+            <i class="fas fa-search"></i> بحث
+        </button>
+        <button class="btn btn-danger" onclick="resetUserFilter()">
+            <i class="fas fa-times"></i> إعادة تعيين
+        </button>
+    </div>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المستخدم</th>
+                    <th>الدور</th>
+                    <th>تاريخ الإنشاء</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- سيتم تعبئتها بالبيانات -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- نافذة مودال لإضافة/تعديل المستخدم -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="userModalTitle">إضافة مستخدم جديد</h3>
+            <button class="close-btn" id="closeUserModal">&times;</button>
+        </div>
+        <form id="userForm">
+            <input type="hidden" id="userId">
+            <div class="form-group">
+                <label for="newUsername">اسم المستخدم</label>
+                <input type="text" id="newUsername" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">كلمة المرور</label>
+                <input type="password" id="newPassword" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">تأكيد كلمة المرور</label>
+                <input type="password" id="confirmPassword" class="form-control" required>
+            </div>
+          <!--  <div class="form-group">
+                <label for="userRole">الدور</label>
+                <select id="userRole" class="form-control" required>
+                    <option value="مدير النظام">مدير النظام</option>
+                    <option value="موظف">موظف</option>
+                    <option value="مشرف">مشرف</option>
+                </select>
+            </div>
+            -->
+            <div class="form-group" style="margin-top: 20px">
+                <button type="submit" class="btn btn-primary">حفظ المستخدم</button>
+                <button type="button" class="btn btn-danger" id="cancelUserBtn">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
         <!-- نافذة مودال لإضافة باقة -->
         <div id="packageModal" class="modal">
             <div class="modal-content">
@@ -1035,9 +1288,31 @@
         </div>
         <script>
             const GOOGLE_SCRIPT_URL =
-                "https://script.google.com/macros/s/AKfycbyQibPGPHQcgQki9B-XCVJc0Xa2l_Kw4UL_XTXVS0QrBTV0OeRhBE2MvsCF5cNHlshP3g/exec";
+                "https://script.google.com/macros/s/AKfycbzKeunIKZtfpe9oHHdAjYz0NRs4TTKU73ANtGUySefEkTmNp5Iv6yoWH4y8hX-2aPGhhg/exec";
             // public/js/script.js
             document.addEventListener("DOMContentLoaded", function () {
+                 const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
+    
+    if (!userSession) {
+        // إذا لم يكن المستخدم مسجل الدخول، توجيهه لصفحة تسجيل الدخول
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        const user = JSON.parse(userSession);
+        
+        // عرض معلومات المستخدم في لوحة التحكم
+        document.querySelector('.user-info h3').textContent = user.username;
+       // document.querySelector('.user-info p').textContent = user.role;
+        
+        // يمكنك هنا جلب بيانات المستخدم من الخادم إذا لزم الأمر
+        // loadUserData(user.user_id);
+        
+    } catch (e) {
+        console.error('Error parsing user session:', e);
+        window.location.href = 'login.html';
+    }
                 // تحميل الإحصائيات
                 loadStats();
 
@@ -1055,7 +1330,42 @@
 
                 // إعداد معالجات الأحداث
                 setupEventHandlers();
+
+                // إعداد القائمة الجانبية للجوال
+                setupMobileMenu();
             });
+
+            // دالة جديدة لإعداد القائمة الجانبية للجوال
+            function setupMobileMenu() {
+                const menuToggle = document.getElementById("menuToggle");
+                const sidebar = document.getElementById("sidebar");
+                const sidebarOverlay =
+                    document.getElementById("sidebarOverlay");
+
+                if (menuToggle && sidebar && sidebarOverlay) {
+                    menuToggle.addEventListener("click", function () {
+                        sidebar.classList.toggle("active");
+                        sidebarOverlay.classList.toggle("active");
+                    });
+
+                    sidebarOverlay.addEventListener("click", function () {
+                        sidebar.classList.remove("active");
+                        sidebarOverlay.classList.remove("active");
+                    });
+
+                    // إغلاق القائمة عند النقر على رابط
+                    document
+                        .querySelectorAll(".nav-links li")
+                        .forEach((item) => {
+                            item.addEventListener("click", function () {
+                                if (window.innerWidth <= 992) {
+                                    sidebar.classList.remove("active");
+                                    sidebarOverlay.classList.remove("active");
+                                }
+                            });
+                        });
+                }
+            }
 
             function setupEventHandlers() {
                 // التنقل بين الأقسام
@@ -1064,11 +1374,12 @@
                     .addEventListener("click", () =>
                         showSection("subscribersContent"),
                     );
-                document
+               /* document
                     .getElementById("menuTab")
                     .addEventListener("click", () =>
                         showSection("menuContent"),
                     );
+                    */
                 document
                     .getElementById("packagesTab")
                     .addEventListener("click", () =>
@@ -1144,7 +1455,202 @@
                 document
                     .getElementById("startDate")
                     .addEventListener("change", updateEndDate);
+                 document.getElementById("usersTab").addEventListener("click", () => {
+    showSection("usersContent");
+    loadUsers();
+});
 
+document.getElementById("addUserBtn").addEventListener("click", () => {
+    openUserModal();
+});
+
+document.getElementById("closeUserModal").addEventListener("click", () => {
+    closeModal("userModal");
+});
+
+document.getElementById("cancelUserBtn").addEventListener("click", () => {
+    closeModal("userModal");
+});
+
+document.getElementById("userForm").addEventListener("submit", handleUserSubmit);
+
+// دالة لتحميل المستخدمين
+function loadUsers(search = "") {
+    fetch(`/api/users?search=${encodeURIComponent(search)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tbody = document.getElementById("usersTableBody");
+            tbody.innerHTML = "";
+
+            // تأكد أن البيانات هي مصفوفة
+            const users = Array.isArray(data) ? data : [];
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">لا يوجد مستخدمين</td></tr>`;
+                return;
+            }
+
+            users.forEach((user, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>
+                        <button class="action-btn btn-edit" onclick="editUser('${user.user_id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn btn-delete" onclick="deleteUser('${user.user_id}', '${user.username}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error("Error loading users:", error);
+            showAlert("حدث خطأ أثناء تحميل المستخدمين", "error");
+        });
+}
+
+// دالة لفتح نافذة إضافة/تعديل المستخدم
+function openUserModal(user = null) {
+    const modal = document.getElementById("userModal");
+    const form = document.getElementById("userForm");
+    
+    form.reset();
+    document.getElementById("userId").value = "";
+    
+    if (user) {
+        document.getElementById("userModalTitle").textContent = "تعديل المستخدم";
+        document.getElementById("userId").value = user.user_id;
+        document.getElementById("newUsername").value = user.username;
+       // document.getElementById("userRole").value = user.role;
+        document.getElementById("newPassword").required = false;
+        document.getElementById("confirmPassword").required = false;
+    } else {
+        document.getElementById("userModalTitle").textContent = "إضافة مستخدم جديد";
+        document.getElementById("newPassword").required = true;
+        document.getElementById("confirmPassword").required = true;
+    }
+    
+    modal.style.display = "block";
+}
+
+// دالة لتقديم نموذج المستخدم
+async function handleUserSubmit(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById("userId").value;
+    const username = document.getElementById("newUsername").value;
+    const password = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+   // const role = document.getElementById("userRole").value;
+    const isEditMode = !!userId;
+    
+    // التحقق من تطابق كلمات المرور (للمستخدمين الجدد فقط)
+    if (!isEditMode && password !== confirmPassword) {
+        showAlert("كلمتا المرور غير متطابقتين", "error");
+        return;
+    }
+    
+    const formData = { username};
+    if (!isEditMode || password) {
+        formData.password = password;
+    }
+    
+    const url = isEditMode ? `/api/users/${userId}` : "/api/users";
+    const method = isEditMode ? "PUT" : "POST";
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || "حدث خطأ أثناء حفظ المستخدم");
+        }
+        
+        showAlert(
+            isEditMode ? "تم تحديث المستخدم بنجاح" : "تم إضافة المستخدم بنجاح",
+            "success"
+        );
+        
+        closeModal("userModal");
+        loadUsers();
+    } catch (error) {
+        console.error("Error:", error);
+        showAlert(error.message, "error");
+    }
+}
+
+// دالة لتعديل المستخدم
+async function editUser(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`);
+        const user = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(user.error || "حدث خطأ أثناء جلب بيانات المستخدم");
+        }
+        
+        openUserModal(user);
+    } catch (error) {
+        console.error("Error:", error);
+        showAlert(error.message, "error");
+    }
+}
+
+// دالة لحذف المستخدم
+function deleteUser(userId, username) {
+    if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) {
+        fetch(`/api/users/${userId}`, {
+            method: "DELETE"
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert("تم حذف المستخدم بنجاح", "success");
+                loadUsers();
+            } else {
+                throw new Error(data.error || "حدث خطأ أثناء حذف المستخدم");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            showAlert(error.message, "error");
+        });
+    }
+}
+
+// دالة لتصفية المستخدمين
+function filterUsers() {
+    const search = document.getElementById("userSearch").value;
+    loadUsers(search);
+}
+
+// دالة لإعادة تعيين التصفية
+function resetUserFilter() {
+    document.getElementById("userSearch").value = "";
+    loadUsers();
+}
+
+// جعل الدوال متاحة عالمياً
+window.editUser = editUser;
+window.deleteUser = deleteUser;
+window.filterUsers = filterUsers;
+window.resetUserFilter = resetUserFilter;
                 function updateEndDate() {
                     const startDate =
                         document.getElementById("startDate").value;
@@ -1226,29 +1732,29 @@
                                 sub.meals_remaining - (sub.meals_deducted || 0);
 
                             tr.innerHTML = `
-                                <td>${sub.subscriber_id}</td>
-                                <td>${escapedName}</td>
-                                <td>${sub.phone}</td>
-                                <td>${sub.start_date}</td>
-                                <td>${escapedType}</td>
-                                <td class="meals-remaining">${mealsRemaining}</td>
-                                <td><span class="status-badge ${getStatusClass(sub.status)}">${sub.status}</span></td>
-                                <td>
-                                    <button class="action-btn btn-edit" onclick="editSubscriber(${sub.subscriber_id})">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn btn-delete" onclick="deleteSubscriber(${sub.subscriber_id})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <button class="action-btn btn-deduct" 
-                                            onclick="deductMeal(${sub.subscriber_id}, '${escapedName.replace(/'/g, "\\'")}', '${escapedType.replace(/'/g, "\\'")}')">
-                                        <i class="fas fa-utensil-spoon"></i>
-                                    </button>
-                                    <button class="action-btn" onclick="generateQR(${sub.subscriber_id}, '${escapedName.replace(/'/g, "\\'")}')">
-                                        <i class="fas fa-qrcode"></i>
-                                    </button>
-                                </td>
-                            `;
+                            <td>${sub.subscriber_id}</td>
+                            <td>${escapedName}</td>
+                            <td>${sub.phone}</td>
+                            <td>${sub.start_date}</td>
+                            <td>${escapedType}</td>
+                            <td class="meals-remaining">${mealsRemaining}</td>
+                            <td><span class="status-badge ${getStatusClass(sub.status)}">${sub.status}</span></td>
+                            <td>
+                                <button class="action-btn btn-edit" onclick="editSubscriber(${sub.subscriber_id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn btn-delete" onclick="deleteSubscriber(${sub.subscriber_id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="action-btn btn-deduct" 
+                                        onclick="deductMeal(${sub.subscriber_id}, '${escapedName.replace(/'/g, "\\'")}', '${escapedType.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-utensil-spoon"></i>
+                                </button>
+                                <button class="action-btn" onclick="generateQR(${sub.subscriber_id}, '${escapedName.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                            </td>
+                        `;
 
                             tbody.appendChild(tr);
                         });
@@ -1280,17 +1786,17 @@
                         menuItems.forEach((item) => {
                             const tr = document.createElement("tr");
                             tr.innerHTML = `
-                                <td>${item.item_name}</td>
-                                <td>${item.price} ريال</td>
-                                <td>
-                                    <button class="action-btn btn-edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn btn-delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            `;
+                            <td>${item.item_name}</td>
+                            <td>${item.price} ريال</td>
+                            <td>
+                                <button class="action-btn btn-edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn btn-delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
                             tbody.appendChild(tr);
                         });
                     })
@@ -1310,20 +1816,20 @@
                         packages.forEach((pkg) => {
                             const tr = document.createElement("tr");
                             tr.innerHTML = `
-                                <td>${pkg.package_id}</td>
-                                <td>${pkg.package_name}</td>
-                                <td>${pkg.price} ريال</td>
-                                <td>${pkg.meals_count}</td>
-                                <td>${pkg.subscription_days} يوم</td>
-                                <td>
-                                    <button class="action-btn btn-edit" onclick="editPackage(${pkg.package_id})">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn btn-delete" onclick="deletePackage(${pkg.package_id}, '${pkg.package_name}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            `;
+                            <td>${pkg.package_id}</td>
+                            <td>${pkg.package_name}</td>
+                            <td>${pkg.price} ريال</td>
+                            <td>${pkg.meals_count}</td>
+                            <td>${pkg.subscription_days} يوم</td>
+                            <td>
+                                <button class="action-btn btn-edit" onclick="editPackage(${pkg.package_id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn btn-delete" onclick="deletePackage(${pkg.package_id}, '${pkg.package_name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
                             tbody.appendChild(tr);
                         });
                     })
@@ -1333,7 +1839,7 @@
                     });
             }
 
-            async function loadSubscriptionRequests() {
+             async function loadSubscriptionRequests() {
                 try {
                     const response = await fetch(
                         `${GOOGLE_SCRIPT_URL}?action=getOrders`,
@@ -1535,77 +2041,101 @@
                 document.getElementById(modalId).style.display = "none";
             }
 
-            function handleSubscriberSubmit(e) {
-                e.preventDefault();
+           async function handleSubscriberSubmit(e) {
+    e.preventDefault();
 
-                const subscriberId =
-                    document.getElementById("subscriberId").value;
-                const isEditMode = !!subscriberId;
+    const btn = document.getElementById("saveSubscriberBtn");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.disabled = true;
 
-                const startDate = document.getElementById("startDate").value;
-                const subscriptionType =
-                    document.getElementById("subscriptionType");
-                const selectedOption =
-                    subscriptionType.options[subscriptionType.selectedIndex];
-                const days = selectedOption
-                    ? selectedOption.getAttribute("data-days")
-                    : 0;
-                const meals = selectedOption
-                    ? selectedOption.getAttribute("data-meals")
-                    : 0;
+    try {
+        const subscriberId = document.getElementById("subscriberId").value;
+        const isEditMode = !!subscriberId;
+        const phone = document.getElementById("phone").value;
+        const name = document.getElementById("name").value;
+        const status = document.getElementById("status").value;
 
-                // حساب تاريخ الانتهاء
-                const endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + parseInt(days || 0));
+        // تحضير بيانات المشترك
+        const startDate = document.getElementById("startDate").value;
+        const subscriptionType = document.getElementById("subscriptionType");
+        const selectedOption = subscriptionType.options[subscriptionType.selectedIndex];
+        const days = selectedOption ? selectedOption.getAttribute("data-days") : 0;
+        const meals = selectedOption ? selectedOption.getAttribute("data-meals") : 0;
 
-                const formData = {
-                    name: document.getElementById("name").value,
-                    phone: document.getElementById("phone").value,
-                    start_date: startDate,
-                    end_date: endDate.toISOString().split("T")[0],
-                    subscription_type: subscriptionType.value,
-                    meals_remaining: meals,
-                    status: document.getElementById("status").value,
-                };
+        // حساب تاريخ الانتهاء
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + parseInt(days || 0));
 
-                const method = isEditMode ? "PUT" : "POST";
-                const url = isEditMode
-                    ? `/api/subscribers/${subscriberId}`
-                    : "/api/subscribers";
+        const formData = {
+            name: name,
+            phone: phone,
+            start_date: startDate,
+            end_date: endDate.toISOString().split("T")[0],
+            subscription_type: subscriptionType.value,
+            meals_remaining: meals,
+            status: status,
+        };
 
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(formData),
-                })
-                    .then((response) => {
-                        if (!response.ok)
-                            throw new Error("Network response was not ok");
-                        return response.json();
-                    })
-                    .then((data) => {
-                        closeModal("subscriberModal");
-                        loadSubscribers();
-                        showAlert(
-                            isEditMode
-                                ? "تم تحديث المشترك بنجاح"
-                                : "تم إضافة المشترك بنجاح",
-                            "success",
-                        );
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                        showAlert(
-                            isEditMode
-                                ? "حدث خطأ أثناء تحديث المشترك"
-                                : "حدث خطأ أثناء إضافة المشترك",
-                            "error",
-                        );
-                    });
+        const method = isEditMode ? "PUT" : "POST";
+        const url = isEditMode ? `/api/subscribers/${subscriberId}` : "/api/subscribers";
+
+        // 1. حفظ المشترك
+        const saveResponse = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+        });
+
+        if (!saveResponse.ok) {
+            const errorData = await saveResponse.json();
+            throw new Error(errorData.message || "فشل في حفظ المشترك");
+        }
+
+        // 2. التعامل مع النجاح
+        if (isEditMode) {
+            showAlert("تم تحديث المشترك بنجاح", "success");
+            loadSubscribers();
+        } else {
+            showAlert("تم إضافة المشترك بنجاح", "success");
+            loadSubscribers();
+  
+            // 📩 إرسال رسالة واتساب
+            const message = `
+📢  ${formData.name} مرحبا :
+تفاصيل اشتراكك في NEW START
+👤 الاسم: ${formData.name}
+📱 الهاتف: ${formData.phone}
+📦 الباقة: ${formData.subscription_type}
+🍽️ عدد الوجبات: ${formData.meals_remaining}
+📅 تاريخ البداية: ${formData.start_date}
+📅 تاريخ الانتهاء: ${formData.end_date}
+
+            `;
+const customerName = formData.phone;
+           
+            try {
+                await fetch(`http://75.119.153.226:1111/send-message?number=${customerName}&message=${encodeURIComponent(message)}`);
+                console.log("تم إرسال رسالة واتساب بنجاح");
+            } catch (err) {
+                console.error("فشل إرسال رسالة واتساب:", err);
             }
+        }
 
+        // 3. تحديث الواجهة
+        closeModal("subscriberModal");
+        await loadSubscriptionRequests();
+        await loadSubscribers();
+    } catch (error) {
+        console.error("Error:", error);
+        showAlert("حدث خطأ أثناء العملية: " + error.message, "error");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
             function handleItemSubmit(e) {
                 e.preventDefault();
 
@@ -1721,25 +2251,30 @@
                 }
             }
 
-            function deductMeal(subscriberId) {
-                if (confirm("هل تريد خصم وجبة لهذا المشترك؟")) {
-                    fetch(`/api/subscribers/${subscriberId}/deduct`, {
-                        method: "POST",
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                loadSubscribers();
-                                showAlert("تم خصم الوجبة بنجاح", "success");
-                            } else {
-                                throw new Error("Failed to deduct meal");
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            showAlert("حدث خطأ أثناء خصم الوجبة", "error");
-                        });
-                }
-            }
+            const userSession = sessionStorage.getItem("user");
+const user = JSON.parse(userSession);
+
+// عند الضغط على زر خصم وجبة
+function deductMeal(subscriberId, subscriberName, subscriptionType) {
+    fetch(`/api/subscribers/${subscriberId}/deduct-meal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            subscriber_name: subscriberName,
+            subscription_type: subscriptionType,
+            username: user.username   // 👈 هنا نرسل اسم المستخدم
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("تم الخصم بواسطة: " + user.username);
+        } else {
+            alert("خطأ: " + data.error);
+        }
+    })
+    .catch(err => console.error("Error:", err));
+}
 
             function generateQR(id, name) {
                 const qrModal = document.getElementById("qrModal");
@@ -1767,8 +2302,6 @@
             function closeQRModal() {
                 document.getElementById("qrModal").style.display = "none";
             }
-
-            // دالة طباعة QR Code
 
             // جعل الدوال متاحة عالمياً
             window.closeQRModal = closeQRModal;
@@ -2145,6 +2678,124 @@
                 );
                 if (!response.ok) throw new Error("فشل في تحديث حالة الطلب");
             }
+            function generateReport() {
+    const subscriberId = document.getElementById("reportSubscriberId").value;
+    if (!subscriberId) {
+        showAlert("الرجاء إدخال رقم المشترك", "error");
+        return;
+    }
+
+    const reportResult = document.getElementById("reportResult");
+    reportResult.innerHTML = '<p class="loading">جاري تحميل التقرير...</p>';
+
+    fetch(`/api/subscribers/${subscriberId}/report`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("فشل في جلب التقرير");
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            renderReport(data);
+        })
+        .catch(error => {
+            reportResult.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
+        });
+}
+
+function renderReport(data) {
+     const user = JSON.parse(userSession);
+    const { subscriber, mealLogs, totalDeducted, mealsRemaining ,username} = data;
+    const reportResult = document.getElementById("reportResult");
+
+    let html = `
+        <div class="report-summary">
+            <h3>تقرير المشترك: ${subscriber.name}</h3>
+            <table class="summary-table">
+                <tr>
+                    <th>رقم المشترك</th>
+                    <td>${subscriber.subscriber_id}</td>
+                </tr>
+                <tr>
+                    <th>رقم الجوال</th>
+                    <td>${subscriber.phone}</td>
+                </tr>
+                <tr>
+                    <th>نوع الاشتراك</th>
+                    <td>${subscriber.subscription_type}</td>
+                </tr>
+                <tr>
+                    <th>الحالة</th>
+                    <td>${subscriber.status}</td>
+                </tr>
+                <tr>
+                    <th>الوجبات المخصومة</th>
+                    <td>${totalDeducted}</td>
+                </tr>
+                <tr>
+                    <th>الوجبات المتبقية</th>
+                    <td>${mealsRemaining}</td>
+                </tr>
+            </table>
+        </div>
+    `;
+
+    if (mealLogs.length > 0) {
+        html += `
+            <div class="meal-logs" style="margin-top: 30px;">
+                <h4>سجل خصم الوجبات</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>اسم المشترك</th>
+                                <th>نوع الاشتراك</th>
+                                <th>عدد الوجبات المخصومة</th>
+                                <th>الوجبات المتبقية بعد الخصم</th>
+                                <th>المستخدم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        mealLogs.forEach(log => {
+            html += `
+                <tr>
+                    <td>${new Date(log.date).toLocaleString()}</td>
+                    <td>${log.subscriber_name}</td>
+                    <td>${log.subscription_type}</td>
+                    <td>${log.meals_deducted}</td>
+                    <td>${log.meals_remaining}</td>
+                    <td>${log.user}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } else {
+        html += `<p>لا توجد سجلات لخصم الوجبات.</p>`;
+    }
+
+    reportResult.innerHTML = html;
+}
+function logout() {
+    // إزالة جلسة المستخدم
+    localStorage.removeItem('userSession');
+    sessionStorage.removeItem('userSession');
+    
+    // توجيه المستخدم إلى صفحة تسجيل الدخول
+    window.location.href = '/';
+}
+
             // جعل الدوال متاحة عالمياً للاستدعاء من HTML
             window.showSection = showSection;
             window.editSubscriber = editSubscriber;
