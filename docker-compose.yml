@@ -8,8 +8,6 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-    volumes:
-      - /root/n8n-docker/app_data/database.db:/usr/src/app/database.db
     networks:
       - backend
 
