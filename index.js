@@ -104,7 +104,7 @@ db.run(
     },
 );
 // Routes
-app.get("/", (req, res) => {
+app.get("/newstart", (req, res) => {
     res.sendFile(path.join(__dirname, "login.html"));
 });
 app.get("/index", (req, res) => {
