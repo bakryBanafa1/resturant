@@ -2115,14 +2115,22 @@ window.resetUserFilter = resetUserFilter;
 
             `;
 const customerName = formData.phone;
-           
-            try {
-                await fetch(`http://75.119.153.226:1111/send-message?number=${customerName}&message=${encodeURIComponent(message)}`);
-                console.log("تم إرسال رسالة واتساب بنجاح");
-            } catch (err) {
-                console.error("فشل إرسال رسالة واتساب:", err);
-            }
-        }
+
+try {
+    await fetch("/api/send-message", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            number: customerName,
+            message: message
+        }),
+    });
+    console.log("تم إرسال رسالة واتساب بنجاح");
+} catch (err) {
+    console.error("فشل إرسال رسالة واتساب:", err);
+}
 
         // 3. تحديث الواجهة
         closeModal("subscriberModal");
