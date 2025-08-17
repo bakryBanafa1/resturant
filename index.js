@@ -719,6 +719,20 @@ app.get('/api/users/:id', (req, res) => {
         res.json(userData);
     });
 });
+app.post("/api/send-message", async (req, res) => {
+    const { number, message } = req.body;
+
+    try {
+        const response = await fetch(`http://75.119.153.226:1111/send-message?number=${number}&message=${encodeURIComponent(message)}`);
+        if (!response.ok) {
+            throw new Error("فشل في إرسال الرسالة");
+        }
+        res.json({ success: true, message: "تم إرسال رسالة واتساب بنجاح" });
+    } catch (err) {
+        console.error("خطأ أثناء إرسال الرسالة:", err);
+        res.status(500).json({ success: false, error: "فشل في إرسال الرسالة" });
+    }
+});
 // بدء الخادم
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
