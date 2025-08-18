@@ -112,7 +112,7 @@ app.get("/index", (req, res) => {
 });
 // API Routes
 // المشتركين
-app.get("/api/subscribers", (req, res) => {
+app.get("/newstart/api/subscribers", (req, res) => {
     const search = req.query.search || "";
     db.all(
         `SELECT * FROM subscribers 
@@ -128,7 +128,7 @@ app.get("/api/subscribers", (req, res) => {
     );
 });
 
-app.post("/api/subscribers", (req, res) => {
+app.post("/newstart/api/subscribers", (req, res) => {
     const {
         name,
         phone,
@@ -165,7 +165,7 @@ app.post("/api/subscribers", (req, res) => {
 });
 
 // قائمة الطعام
-app.get("/api/menu", (req, res) => {
+app.get("/newstart/api/menu", (req, res) => {
     db.all("SELECT * FROM menu", (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -175,7 +175,7 @@ app.get("/api/menu", (req, res) => {
     });
 });
 
-app.post("/api/menu", (req, res) => {
+app.post("/newstart/api/menu", (req, res) => {
     const { item_name, price } = req.body;
     db.run(
         "INSERT INTO menu (item_name, price) VALUES (?, ?)",
@@ -191,7 +191,7 @@ app.post("/api/menu", (req, res) => {
 });
 
 // الباقات
-app.get("/api/packages", (req, res) => {
+app.get("/newstart/api/packages", (req, res) => {
     const search = req.query.search || "";
     db.all(
         `SELECT * FROM packages WHERE package_name LIKE ?`,
@@ -206,7 +206,7 @@ app.get("/api/packages", (req, res) => {
     );
 });
 
-app.post("/api/packages", (req, res) => {
+app.post("/newstart/api/packages", (req, res) => {
     const { package_name, price, meals_count, subscription_days } = req.body;
     db.run(
         `INSERT INTO packages (package_name, price, meals_count, subscription_days) 
@@ -223,7 +223,7 @@ app.post("/api/packages", (req, res) => {
 });
 
 // طلبات الاشتراك
-app.get("/api/orders", (req, res) => {
+app.get("/newstart/api/orders", (req, res) => {
     db.all(
         "SELECT * FROM orders WHERE status = ?",
         ["قيد الانتظار"],
@@ -237,7 +237,7 @@ app.get("/api/orders", (req, res) => {
     );
 });
 
-app.post("/api/orders/approve", (req, res) => {
+app.post("/newstart/api/orders/approve", (req, res) => {
     const { order_id } = req.body;
     // هنا يمكنك إضافة منطق الموافقة على الطلب
     // مثل إنشاء مشترك جديد بناءً على الطلب
@@ -245,7 +245,7 @@ app.post("/api/orders/approve", (req, res) => {
 });
 
 // الإحصائيات
-app.get("/api/stats", (req, res) => {
+app.get("/newstart/api/stats", (req, res) => {
     db.get("SELECT COUNT(*) as total FROM subscribers", (err, row) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -287,7 +287,7 @@ app.get("/api/stats", (req, res) => {
     });
 });
 // الحصول على الباقات لاستخدامها في واجهة إضافة المشترك
-app.get("/api/packages/list", (req, res) => {
+app.get("/newstart/api/packages/list", (req, res) => {
     db.all("SELECT * FROM packages", (err, rows) => {
         if (err) {
             console.error("Database error:", err); // إضافة تسجيل للخطأ
@@ -298,7 +298,7 @@ app.get("/api/packages/list", (req, res) => {
         res.json(rows);
     });
 });
-app.put("/api/subscribers/:id", (req, res) => {
+app.put("/newstart/api/subscribers/:id", (req, res) => {
     const {
         name,
         phone,
@@ -343,7 +343,7 @@ app.put("/api/subscribers/:id", (req, res) => {
 });
 
 // الحصول على بيانات مشترك معين
-app.get("/api/subscribers/:id", (req, res) => {
+app.get("/newstart/api/subscribers/:id", (req, res) => {
     db.get(
         "SELECT * FROM subscribers WHERE subscriber_id = ?",
         [req.params.id],
@@ -361,7 +361,7 @@ app.get("/api/subscribers/:id", (req, res) => {
         },
     );
 });
-app.delete("/api/subscribers/:id", (req, res) => {
+app.delete("/newstart/api/subscribers/:id", (req, res) => {
     db.run(
         "DELETE FROM subscribers WHERE subscriber_id = ?",
         [req.params.id],
@@ -379,7 +379,7 @@ app.delete("/api/subscribers/:id", (req, res) => {
         },
     );
 });
-app.post("/api/subscribers/:id/deduct-meal", (req, res) => {
+app.post("/newstart/api/subscribers/:id/deduct-meal", (req, res) => {
     // الحصول على اسم المستخدم من الجسم أو من بيانات الجلسة
    const username = req.body.username || req.user?.username || "System";
     
@@ -456,7 +456,7 @@ app.post("/api/subscribers/:id/deduct-meal", (req, res) => {
         );
     });
 });
-app.get("/api/packages/:id", (req, res) => {
+app.get("/newstart/api/packages/:id", (req, res) => {
     db.get(
         "SELECT * FROM packages WHERE package_id = ?",
         [req.params.id],
@@ -474,7 +474,7 @@ app.get("/api/packages/:id", (req, res) => {
 });
 
 // تحديث باقة
-app.put("/api/packages/:id", (req, res) => {
+app.put("/newstart/api/packages/:id", (req, res) => {
     const { package_name, price, meals_count, subscription_days } = req.body;
 
     db.run(
@@ -499,7 +499,7 @@ app.put("/api/packages/:id", (req, res) => {
 });
 
 // حذف باقة
-app.delete("/api/packages/:id", (req, res) => {
+app.delete("/newstart/api/packages/:id", (req, res) => {
     db.run(
         "DELETE FROM packages WHERE package_id = ?",
         [req.params.id],
@@ -515,7 +515,7 @@ app.delete("/api/packages/:id", (req, res) => {
         },
     );
 });
-app.get("/api/subscribers/:id/report", (req, res) => {
+app.get("/newstart/api/subscribers/:id/report", (req, res) => {
     const subscriberId = req.params.id;
     
     // جلب بيانات المشترك الأساسية
@@ -549,7 +549,7 @@ app.get("/api/subscribers/:id/report", (req, res) => {
         });
     });
 });
-app.post('/api/login', (req, res) => {
+app.post('/newstart/api/login', (req, res) => {
     const { username, password } = req.body;
     
     if (!username || !password) {
@@ -596,7 +596,7 @@ app.post('/api/login', (req, res) => {
         });
     });
 });
-app.get('/api/users', (req, res) => {
+app.get('/newstart/api/users', (req, res) => {
   const search = (req.query.search || '').trim();
 
   let sql = `SELECT user_id, username FROM users`;
@@ -618,7 +618,7 @@ app.get('/api/users', (req, res) => {
   });
 });
 // إضافة مستخدم جديد
-app.post('/api/users', (req, res) => {
+app.post('/newstart/api/users', (req, res) => {
     const { username, password } = req.body;
     
     if (!username || !password) {
@@ -646,7 +646,7 @@ app.post('/api/users', (req, res) => {
 });
 
 // تحديث مستخدم
-app.put('/api/users/:id', (req, res) => {
+app.put('/newstart/api/users/:id', (req, res) => {
     const userId = req.params.id;
     const { username, password} = req.body;
     
@@ -683,7 +683,7 @@ app.put('/api/users/:id', (req, res) => {
 });
 
 // حذف مستخدم
-app.delete('/api/users/:id', (req, res) => {
+app.delete('/newstart/api/users/:id', (req, res) => {
     const userId = req.params.id;
     
     db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err) {
@@ -701,7 +701,7 @@ app.delete('/api/users/:id', (req, res) => {
 });
 
 // جلب بيانات مستخدم معين
-app.get('/api/users/:id', (req, res) => {
+app.get('/newstart/api/users/:id', (req, res) => {
     const userId = req.params.id;
     
     db.get('SELECT * FROM users WHERE user_id = ?', [userId], (err, row) => {
@@ -719,7 +719,7 @@ app.get('/api/users/:id', (req, res) => {
         res.json(userData);
     });
 });
-app.post("/api/send-message", async (req, res) => {
+app.post("/newstart/api/send-message", async (req, res) => {
     const { number, message } = req.body;
 
     try {
