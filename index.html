@@ -1476,7 +1476,7 @@ document.getElementById("userForm").addEventListener("submit", handleUserSubmit)
 
 // دالة لتحميل المستخدمين
 function loadUsers(search = "") {
-    fetch(`/api/users?search=${encodeURIComponent(search)}`)
+    fetch(`/newstart/api/users?search=${encodeURIComponent(search)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -1564,7 +1564,7 @@ async function handleUserSubmit(e) {
         formData.password = password;
     }
     
-    const url = isEditMode ? `/api/users/${userId}` : "/api/users";
+    const url = isEditMode ? `/newstart/api/users/${userId}` : "/newstart/api/users";
     const method = isEditMode ? "PUT" : "POST";
     
     try {
@@ -1598,7 +1598,7 @@ async function handleUserSubmit(e) {
 // دالة لتعديل المستخدم
 async function editUser(userId) {
     try {
-        const response = await fetch(`/api/users/${userId}`);
+        const response = await fetch(`/newstart/api/users/${userId}`);
         const user = await response.json();
         
         if (!response.ok) {
@@ -1615,7 +1615,7 @@ async function editUser(userId) {
 // دالة لحذف المستخدم
 function deleteUser(userId, username) {
     if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) {
-        fetch(`/api/users/${userId}`, {
+        fetch(`/newstart/api/users/${userId}`, {
             method: "DELETE"
         })
         .then(response => response.json())
@@ -1690,7 +1690,7 @@ window.resetUserFilter = resetUserFilter;
             }
 
             function loadStats() {
-                fetch("/api/stats")
+                fetch("/newstart/api/stats")
                     .then((response) => response.json())
                     .then((data) => {
                         document.getElementById(
@@ -1708,7 +1708,7 @@ window.resetUserFilter = resetUserFilter;
             }
 
             function loadSubscribers(search = "") {
-                fetch(`/api/subscribers?search=${encodeURIComponent(search)}`)
+                fetch(`/newstart/api/subscribers?search=${encodeURIComponent(search)}`)
                     .then((response) => response.json())
                     .then((subscribers) => {
                         const tbody = document.getElementById(
@@ -1777,7 +1777,7 @@ window.resetUserFilter = resetUserFilter;
             }
 
             function loadMenu() {
-                fetch("/api/menu")
+                fetch("/newstart/api/menu")
                     .then((response) => response.json())
                     .then((menuItems) => {
                         const tbody = document.getElementById("menuTableBody");
@@ -1806,7 +1806,7 @@ window.resetUserFilter = resetUserFilter;
             }
 
             function loadPackages(search = "") {
-                fetch(`/api/packages?search=${encodeURIComponent(search)}`)
+                fetch(`/newstart/api/packages?search=${encodeURIComponent(search)}`)
                     .then((response) => response.json())
                     .then((packages) => {
                         const tbody =
@@ -1965,7 +1965,7 @@ window.resetUserFilter = resetUserFilter;
                 subscriptionTypeSelect.innerHTML =
                     '<option value="">جاري تحميل الباقات...</option>';
 
-                fetch("/api/packages/list")
+                fetch("/newstart/api/packages/list")
                     .then((response) => {
                         if (!response.ok)
                             throw new Error("Network response was not ok");
@@ -2078,7 +2078,7 @@ window.resetUserFilter = resetUserFilter;
         };
 
         const method = isEditMode ? "PUT" : "POST";
-        const url = isEditMode ? `/api/subscribers/${subscriberId}` : "/api/subscribers";
+        const url = isEditMode ? `/newstart/api/subscribers/${subscriberId}` : "/newstart/api/subscribers";
 
         // 1. حفظ المشترك
         const saveResponse = await fetch(url, {
@@ -2117,7 +2117,7 @@ window.resetUserFilter = resetUserFilter;
 const customerName = formData.phone;
 
 try {
-    await fetch("/api/send-message", {
+    await fetch("/newstart/api/send-message", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -2152,7 +2152,7 @@ try {
                     price: document.getElementById("item_price").value,
                 };
 
-                fetch("/api/menu", {
+                fetch("/newstart/api/menu", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -2187,8 +2187,8 @@ try {
                 };
 
                 const url = isEditMode
-                    ? `/api/packages/${packageId}`
-                    : "/api/packages";
+                    ? `/newstart/api/packages/${packageId}`
+                    : "/newstart/api/packages";
                 const method = isEditMode ? "PUT" : "POST";
 
                 fetch(url, {
@@ -2229,7 +2229,7 @@ try {
             }
 
             function editSubscriber(id) {
-                fetch(`/api/subscribers/${id}`)
+                fetch(`/newstart/api/subscribers/${id}`)
                     .then((response) => response.json())
                     .then((subscriber) => {
                         openSubscriberModal(subscriber);
@@ -2241,7 +2241,7 @@ try {
 
             function deleteSubscriber(id) {
                 if (confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
-                    fetch(`/api/subscribers/${id}`, {
+                    fetch(`/newstart/api/subscribers/${id}`, {
                         method: "DELETE",
                     })
                         .then((response) => {
@@ -2264,7 +2264,7 @@ const user = JSON.parse(userSession);
 
 // عند الضغط على زر خصم وجبة
 function deductMeal(subscriberId, subscriberName, subscriptionType) {
-    fetch(`/api/subscribers/${subscriberId}/deduct-meal`, {
+    fetch(`/newstart/api/subscribers/${subscriberId}/deduct-meal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2404,7 +2404,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                 subscriptionTypeSelect.innerHTML =
                     '<option value="">جاري تحميل الباقات...</option>';
 
-                fetch("/api/packages/list")
+                fetch("/newstart/api/packages/list")
                     .then((response) => response.json())
                     .then((packages) => {
                         subscriptionTypeSelect.innerHTML =
@@ -2443,7 +2443,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
 
             function rejectRequest(orderId) {
                 if (confirm("هل أنت متأكد من رفض هذا الطلب؟")) {
-                    fetch(`/api/orders/${orderId}/reject`, {
+                    fetch(`/newstart/api/orders/${orderId}/reject`, {
                         method: "POST",
                     })
                         .then((response) => {
@@ -2507,7 +2507,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                 }
             }
             function editSubscriber(id) {
-                fetch(`/api/subscribers/${id}`)
+                fetch(`/newstart/api/subscribers/${id}`)
                     .then((response) => {
                         if (!response.ok) {
                             throw new Error("Network response was not ok");
@@ -2533,7 +2533,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     btn.disabled = true;
 
-                    fetch(`/api/subscribers/${id}`, {
+                    fetch(`/newstart/api/subscribers/${id}`, {
                         method: "DELETE",
                     })
                         .then((response) => {
@@ -2568,7 +2568,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     btn.disabled = true;
 
-                    fetch(`/api/subscribers/${subscriberId}/deduct-meal`, {
+                    fetch(`/newstart/api/subscribers/${subscriberId}/deduct-meal`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -2609,7 +2609,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                 }
             }
             function editPackage(packageId) {
-                fetch(`/api/packages/${packageId}`)
+                fetch(`/newstart/api/packages/${packageId}`)
                     .then((response) => response.json())
                     .then((packageData) => {
                         // فتح نافذة التعديل مع بيانات الباقة
@@ -2641,7 +2641,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
             // دالة حذف الباقة
             function deletePackage(packageId, packageName) {
                 if (confirm(`هل أنت متأكد من حذف باقة "${packageName}"؟`)) {
-                    fetch(`/api/packages/${packageId}`, {
+                    fetch(`/newstart/api/packages/${packageId}`, {
                         method: "DELETE",
                     })
                         .then((response) => {
@@ -2696,7 +2696,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
     const reportResult = document.getElementById("reportResult");
     reportResult.innerHTML = '<p class="loading">جاري تحميل التقرير...</p>';
 
-    fetch(`/api/subscribers/${subscriberId}/report`)
+    fetch(`/newstart/api/subscribers/${subscriberId}/report`)
         .then(response => {
             if (!response.ok) {
                 throw new Error("فشل في جلب التقرير");
