@@ -107,7 +107,7 @@ db.run(
 app.get("/newstart", (req, res) => {
     res.sendFile(path.join(__dirname, "login.html"));
 });
-app.get("/index", (req, res) => {
+app.get("/newstart/index", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 // API Routes
@@ -720,8 +720,8 @@ app.get('/newstart/api/users/:id', (req, res) => {
     });
 });
 app.post("/newstart/api/send-message", async (req, res) => {
-    const { number, message } = req.body;
-
+  
+console.log(number +message)
     try {
         const response = await fetch(`http://75.119.153.226:1111/send-message?number=${number}&message=${encodeURIComponent(message)}`);
         if (!response.ok) {
