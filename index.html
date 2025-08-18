@@ -2041,7 +2041,7 @@ window.resetUserFilter = resetUserFilter;
                 document.getElementById(modalId).style.display = "none";
             }
 
-           async function handleSubscriberSubmit(e) {
+         async function handleSubscriberSubmit(e) {
     e.preventDefault();
 
     const btn = document.getElementById("saveSubscriberBtn");
@@ -2112,25 +2112,26 @@ window.resetUserFilter = resetUserFilter;
 🍽️ عدد الوجبات: ${formData.meals_remaining}
 📅 تاريخ البداية: ${formData.start_date}
 📅 تاريخ الانتهاء: ${formData.end_date}
-
             `;
-const customerName = formData.phone;
+            
+            const customerName = formData.phone;
 
-try {
-    await fetch("/newstart/api/send-message", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            number: customerName,
-            message: message
-        }),
-    });
-    console.log("تم إرسال رسالة واتساب بنجاح");
-} catch (err) {
-    console.error("فشل إرسال رسالة واتساب:", err);
-}
+            try {
+                await fetch("/newstart/api/send-message", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        number: customerName,
+                        message: message
+                    }),
+                });
+                console.log("تم إرسال رسالة واتساب بنجاح");
+            } catch (err) {
+                console.error("فشل إرسال رسالة واتساب:", err);
+            }
+        }
 
         // 3. تحديث الواجهة
         closeModal("subscriberModal");
