@@ -737,7 +737,7 @@ console.log(number +message)
     }
 });
 function createBackup() {
-   const backupDir = '/usr/src/app/newstartDB';
+   const backupDir = '/root/n8n-docker/app_data/newstartDB';
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir);
     }
@@ -774,7 +774,7 @@ app.get('/newstart/api/backup', (req, res) => {
 
 // مسار لسرد النسخ الاحتياطية المتاحة
 app.get('/newstart/api/backups', (req, res) => {
-    const backupDir = '/usr/src/app/newstartDB';
+    const backupDir = '/root/n8n-docker/app_data/newstartDB';
     if (!fs.existsSync(backupDir)) {
         return res.json([]);
     }
@@ -803,7 +803,7 @@ app.get('/newstart/api/backups/:filename', (req, res) => {
 
 // مسار لحذف نسخة احتياطية
 app.delete('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = '/usr/src/app/newstartDB';
+    const backupDir = '/root/n8n-docker/app_data/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
     
     if (fs.existsSync(filePath)) {
@@ -816,7 +816,7 @@ app.delete('/newstart/api/backups/:filename', (req, res) => {
 app.post('/newstart/api/restore', (req, res) => {
     try {
         const { backupFile } = req.body;
-        const backupDir = '/usr/src/app/newstartDB';
+        const backupDir = '/root/n8n-docker/app_data/newstartDB';
         const backupPath = path.join(backupDir, backupFile);
         const currentDbPath = path.join(__dirname, 'database.db');
 
