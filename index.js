@@ -7,7 +7,7 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-let db = new sqlite3.Database("./root/newstartDB/database.db");
+let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -737,7 +737,7 @@ console.log(number +message)
     }
 });
 function createBackup() {
-    const backupDir = path.join(__dirname, 'backups');
+   const backupDir = '/usr/src/app/newstartDB';
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir);
     }
@@ -774,7 +774,7 @@ app.get('/newstart/api/backup', (req, res) => {
 
 // مسار لسرد النسخ الاحتياطية المتاحة
 app.get('/newstart/api/backups', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     if (!fs.existsSync(backupDir)) {
         return res.json([]);
     }
@@ -791,7 +791,7 @@ app.get('/newstart/api/backups', (req, res) => {
     res.json(files);
 });
 app.get('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
     
     if (fs.existsSync(filePath)) {
@@ -803,7 +803,7 @@ app.get('/newstart/api/backups/:filename', (req, res) => {
 
 // مسار لحذف نسخة احتياطية
 app.delete('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
     
     if (fs.existsSync(filePath)) {
@@ -816,7 +816,7 @@ app.delete('/newstart/api/backups/:filename', (req, res) => {
 app.post('/newstart/api/restore', (req, res) => {
     try {
         const { backupFile } = req.body;
-        const backupDir = path.join(__dirname, 'backups');
+        const backupDir = '/usr/src/app/newstartDB';
         const backupPath = path.join(backupDir, backupFile);
         const currentDbPath = path.join(__dirname, 'database.db');
 
