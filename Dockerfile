@@ -10,7 +10,7 @@ RUN npm install --production
 
 # انسخ باقي ملفات المشروع
 COPY . .
-
+RUN mkdir -p /usr/src/app/newstartDB
 # افتح بورت 3000 (غيره إذا مشروعك يستخدم بورت ثاني)
 EXPOSE 3000
 
