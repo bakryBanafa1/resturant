@@ -14,7 +14,7 @@
         />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-            /* أنماط CSS معدلة */
+           
             :root {
                 --primary: #2c786c;
                 --secondary: #004445;
@@ -47,7 +47,7 @@
                 transition: all 0.3s ease;
             }
 
-            /* الشريط الجانبي - تم التعديل */
+            /* الشريط الجانبي  */
             .sidebar {
                 background: linear-gradient(
                     to bottom,
@@ -603,6 +603,42 @@
                     height: 3cm !important;
                 }
             }
+            .btn-warning {
+    background: #ffc107;
+    color: #000;
+    border: none;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    color: #000;
+}
+
+#restorePreview {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #ffc107;
+}
+
+#restorePreview h5 {
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+#restorePreview p {
+    margin: 5px 0;
+    color: #6c757d;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
 
             /* طبقة الخلفية للقائمة الجانبية على الجوال */
             .sidebar-overlay {
@@ -693,6 +729,22 @@
         width: 100% !important;
     }
 }
+.backup-controls {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+#backupsTable th:nth-child(1) { width: 40%; }
+#backupsTable th:nth-child(2) { width: 15%; }
+#backupsTable th:nth-child(3) { width: 25%; }
+#backupsTable th:nth-child(4) { width: 20%; }
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+}
         </style>
     </head>
     <body>
@@ -736,7 +788,9 @@
                     <li id="usersTab">
     <i class="fas fa-users-cog"></i> إدارة المستخدمين
 </li>
-                    <li><i class="fas fa-cog"></i>الإعدادات</li>
+                 <li id="settingsTab">
+    <i class="fas fa-cog"></i> الإعدادات
+</li>
                 </ul>
             </div>
 
@@ -1061,6 +1115,85 @@
                 <!-- سيتم تعبئتها بالبيانات -->
             </tbody>
         </table>
+    </div>
+</div>
+<!-- قسم الإعدادات -->
+<div id="settingsContent" class="section" style="display: none">
+    <div class="section-header">
+        <h3 class="section-title">الإعدادات</h3>
+    </div>
+    
+    <div class="form-group">
+        <h4>النسخ الاحتياطي</h4>
+        <div class="backup-controls">
+            <button class="btn btn-primary" onclick="createBackup()">
+                <i class="fas fa-download"></i> إنشاء نسخة احتياطية الآن
+            </button>
+            
+            <button class="btn btn-warning" onclick="showRestoreModal()" style="margin-left: 10px;">
+                <i class="fas fa-upload"></i> استعادة نسخة احتياطية
+            </button>
+            
+            <div class="form-group" style="margin-top: 20px">
+               
+            </div>
+        </div>
+        
+        <div id="backupResult" style="margin-top: 15px"></div>
+        
+        <h4 style="margin-top: 30px">النسخ الاحتياطية السابقة</h4>
+        <div class="table-container">
+            <table id="backupsTable">
+                <thead>
+                    <tr>
+                        <th>اسم الملف</th>
+                        <th>الحجم</th>
+                        <th>التاريخ</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="backupsList">
+                    <!-- سيتم تعبئتها بالبيانات -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- نافذة مودال الاستعادة -->
+<div id="restoreModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">استعادة نسخة احتياطية</h3>
+            <button class="close-btn" onclick="closeModal('restoreModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>تحذير:</strong> الاستعادة ستحذف جميع البيانات الحالية وتستبدلها بالبيانات من النسخة الاحتياطية.
+            </div>
+            
+            <div class="form-group">
+                <label>اختر نسخة للاستعادة:</label>
+                <select id="restoreFileSelect" class="form-control">
+                    <option value="">-- اختر نسخة احتياطية --</option>
+                    <!-- سيتم تعبئتها بالبيانات -->
+                </select>
+            </div>
+            
+            <div id="restorePreview" style="margin-top: 15px; display: none;">
+                <h5>معلومات النسخة:</h5>
+                <div id="backupInfo"></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px">
+                <button class="btn btn-danger" onclick="confirmRestore()" id="confirmRestoreBtn" disabled>
+                    <i class="fas fa-check"></i> تأكيد الاستعادة
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('restoreModal')">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 <!-- نافذة مودال لإضافة/تعديل المستخدم -->
@@ -1459,7 +1592,10 @@
     showSection("usersContent");
     loadUsers();
 });
-
+  document.getElementById("settingsTab").addEventListener("click", () => {
+    showSection("settingsContent");
+     loadBackups();
+});
 document.getElementById("addUserBtn").addEventListener("click", () => {
     openUserModal();
 });
@@ -2041,10 +2177,10 @@ window.resetUserFilter = resetUserFilter;
                 document.getElementById(modalId).style.display = "none";
             }
 
-         async function handleSubscriberSubmit(e) {
+    async function handleSubscriberSubmit(e) {
     e.preventDefault();
 
-    const btn = document.getElementById("saveSubscriberBtn");
+     const btn = document.getElementById("saveSubscriberBtn");
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
     btn.disabled = true;
@@ -2052,24 +2188,40 @@ window.resetUserFilter = resetUserFilter;
     try {
         const subscriberId = document.getElementById("subscriberId").value;
         const isEditMode = !!subscriberId;
-        const phone = document.getElementById("phone").value;
+        let phone = document.getElementById("phone").value;
         const name = document.getElementById("name").value;
         const status = document.getElementById("status").value;
 
-        // تحضير بيانات المشترك
+        // تنظيف الرقم من أي أحرف غير رقمية
+        phone = phone.replace(/\D/g, '');
+
+        // معالجة الرقم - الحل الجديد
+        if (phone.startsWith('05')) {
+            // إذا كان الرقم يبدأ بـ 05
+            phone = '966' + phone.substring(1); // احذف 05 وأضف 966
+        } else if (phone.startsWith('5')) {
+            // إذا كان الرقم يبدأ بـ 5 فقط
+            phone = '966' + phone.substring(1); // احذف 5 وأضف 966
+        } else if (!phone.startsWith('966')) {
+            // لأي رقم آخر لا يبدأ بـ 966
+            phone = '966' + phone; // أضف 966 افتراضيًا
+        }
+
+        console.log('رقم الهاتف بعد التنسيق:', phone); // للتأكد من الصيغة الصحيحة
+
+        // باقي كود تحضير البيانات...
         const startDate = document.getElementById("startDate").value;
         const subscriptionType = document.getElementById("subscriptionType");
         const selectedOption = subscriptionType.options[subscriptionType.selectedIndex];
         const days = selectedOption ? selectedOption.getAttribute("data-days") : 0;
         const meals = selectedOption ? selectedOption.getAttribute("data-meals") : 0;
 
-        // حساب تاريخ الانتهاء
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + parseInt(days || 0));
 
         const formData = {
             name: name,
-            phone: phone,
+            phone: phone,  // سيحتوي على الرقم مع المفتاح الدولي
             start_date: startDate,
             end_date: endDate.toISOString().split("T")[0],
             subscription_type: subscriptionType.value,
@@ -2077,10 +2229,10 @@ window.resetUserFilter = resetUserFilter;
             status: status,
         };
 
+        // باقي كود الإرسال...
         const method = isEditMode ? "PUT" : "POST";
         const url = isEditMode ? `/newstart/api/subscribers/${subscriberId}` : "/newstart/api/subscribers";
 
-        // 1. حفظ المشترك
         const saveResponse = await fetch(url, {
             method: method,
             headers: {
@@ -2094,27 +2246,21 @@ window.resetUserFilter = resetUserFilter;
             throw new Error(errorData.message || "فشل في حفظ المشترك");
         }
 
-        // 2. التعامل مع النجاح
+        // التعامل مع النجاح
         if (isEditMode) {
             showAlert("تم تحديث المشترك بنجاح", "success");
-            loadSubscribers();
         } else {
             showAlert("تم إضافة المشترك بنجاح", "success");
-            loadSubscribers();
-  
-            // 📩 إرسال رسالة واتساب
-            const message = `
-📢  ${formData.name} مرحبا :
-تفاصيل اشتراكك في NEW START
-👤 الاسم: ${formData.name}
-📱 الهاتف: ${formData.phone}
-📦 الباقة: ${formData.subscription_type}
-🍽️ عدد الوجبات: ${formData.meals_remaining}
-📅 تاريخ البداية: ${formData.start_date}
-📅 تاريخ الانتهاء: ${formData.end_date}
-            `;
             
-            const customerName = formData.phone;
+            // إرسال رسالة الواتساب
+            const message = `📢 ${name} مرحباً:
+تفاصيل اشتراكك في NEW START
+👤 الاسم: ${name}
+📱 الهاتف: ${phone}
+📦 الباقة: ${formData.subscription_type}
+🍽️ عدد الوجبات: ${meals}
+📅 تاريخ البداية: ${startDate}
+📅 تاريخ الانتهاء: ${formData.end_date}`;
 
             try {
                 await fetch("/newstart/api/send-message", {
@@ -2123,23 +2269,24 @@ window.resetUserFilter = resetUserFilter;
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        number: customerName,
+                        number: phone,
                         message: message
                     }),
                 });
-                console.log("تم إرسال رسالة واتساب بنجاح");
+                console.log("تم إرسال الرسالة بنجاح");
             } catch (err) {
-                console.error("فشل إرسال رسالة واتساب:", err);
+                console.error("فشل إرسال الرسالة:", err);
             }
         }
 
-        // 3. تحديث الواجهة
+        // تحديث الواجهة
         closeModal("subscriberModal");
-        await loadSubscriptionRequests();
         await loadSubscribers();
+        await loadSubscriptionRequests();
+
     } catch (error) {
         console.error("Error:", error);
-        showAlert("حدث خطأ أثناء العملية: " + error.message, "error");
+        showAlert("حدث خطأ: " + error.message, "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -2296,7 +2443,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
 
                 // إنشاء QR كود جديد
                 new QRCode(qrcodeDiv, {
-                    text: `SubscriberID:${id},Name:${name}`,
+                    text: `ID:${id},Name:${name}`,
                     width: 200,
                     height: 200,
                     colorDark: "#000000",
@@ -2804,6 +2951,234 @@ function logout() {
     // توجيه المستخدم إلى صفحة تسجيل الدخول
     window.location.href = '/newstart';
 }
+async function createBackup() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/newstart/api/backup');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('backupResult').innerHTML = 
+                `<div class="alert alert-success">
+                    تم إنشاء النسخة الاحتياطية بنجاح: ${data.backupPath}
+                </div>`;
+            loadBackups();
+        } else {
+            document.getElementById('backupResult').innerHTML = 
+                `<div class="alert alert-error">${data.message}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('backupResult').innerHTML = 
+            `<div class="alert alert-error">حدث خطأ أثناء الاتصال بالخادم</div>`;
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// دالة لتحميل قائمة النسخ الاحتياطية
+async function loadBackups() {
+    try {
+        const response = await fetch('/newstart/api/backups');
+        const backups = await response.json();
+        
+        const list = document.getElementById('backupsList');
+        list.innerHTML = '';
+        
+        if (backups.length === 0) {
+            list.innerHTML = `<tr><td colspan="4">لا توجد نسخ احتياطية</td></tr>`;
+            return;
+        }
+        
+        backups.forEach(backup => {
+            const formattedDate = new Date(backup.date).toLocaleString();
+            const formattedSize = formatFileSize(backup.size);
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${backup.name}</td>
+                <td>${formattedSize}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="downloadBackup('${backup.name}')">
+                        <i class="fas fa-download"></i> تنزيل
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteBackup('${backup.name}')">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading backups:', error);
+        document.getElementById('backupsList').innerHTML = 
+            `<tr><td colspan="4">حدث خطأ أثناء تحميل النسخ الاحتياطية</td></tr>`;
+    }
+}
+
+// دالة لتنزيل نسخة احتياطية
+function downloadBackup(filename) {
+    window.open(`/newstart/api/backups/${filename}`, '_blank');
+}
+
+// دالة لحذف نسخة احتياطية
+async function deleteBackup(filename) {
+    if (!confirm(`هل أنت متأكد من حذف النسخة الاحتياطية "${filename}"؟`)) return;
+    
+    try {
+        const response = await fetch(`/newstart/api/backups/${filename}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showAlert('تم حذف النسخة الاحتياطية بنجاح', 'success');
+            loadBackups();
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error deleting backup:', error);
+        showAlert(`حدث خطأ أثناء الحذف: ${error.message}`, 'error');
+    }
+}
+
+// دالة مساعدة لتنسيق حجم الملف
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' بايت';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' كيلوبايت';
+    return (bytes / 1048576).toFixed(1) + ' ميجابايت';
+}
+// دالة لعرض نافذة الاستعادة
+async function showRestoreModal() {
+    const modal = document.getElementById('restoreModal');
+    const select = document.getElementById('restoreFileSelect');
+    
+    // تحميل النسخ الاحتياطية
+    try {
+        const response = await fetch('/newstart/api/backups');
+        const backups = await response.json();
+        
+        select.innerHTML = '<option value="">-- اختر نسخة احتياطية --</option>';
+        
+        backups.forEach(backup => {
+            const option = document.createElement('option');
+            option.value = backup.name;
+            option.textContent = `${backup.name} (${new Date(backup.date).toLocaleString()})`;
+            option.setAttribute('data-size', backup.size);
+            option.setAttribute('data-date', backup.date);
+            select.appendChild(option);
+        });
+        
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading backups:', error);
+        showAlert('حدث خطأ أثناء تحميل النسخ الاحتياطية', 'error');
+    }
+}
+
+// دالة لتحديث معاينة النسخة
+function updateRestorePreview() {
+    const select = document.getElementById('restoreFileSelect');
+    const preview = document.getElementById('restorePreview');
+    const backupInfo = document.getElementById('backupInfo');
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    
+    if (select.value) {
+        const selectedOption = select.options[select.selectedIndex];
+        const size = selectedOption.getAttribute('data-size');
+        const date = selectedOption.getAttribute('data-date');
+        
+        backupInfo.innerHTML = `
+            <p><strong>الاسم:</strong> ${select.value}</p>
+            <p><strong>الحجم:</strong> ${formatFileSize(size)}</p>
+            <p><strong>التاريخ:</strong> ${new Date(date).toLocaleString()}</p>
+        `;
+        
+        preview.style.display = 'block';
+        confirmBtn.disabled = false;
+    } else {
+        preview.style.display = 'none';
+        confirmBtn.disabled = true;
+    }
+}
+
+// دالة لتأكيد الاستعادة
+async function confirmRestore() {
+    const backupFile = document.getElementById('restoreFileSelect').value;
+    
+    if (!backupFile) {
+        showAlert('الرجاء اختيار نسخة احتياطية', 'error');
+        return;
+    }
+    
+    if (!confirm(`⚠️  تحذير: هذا الإجراء لا يمكن التراجع عنه!\n\nهل أنت متأكد من استعادة النسخة "${backupFile}"؟\nجميع البيانات الحالية سيتم حذفها واستبدالها بالبيانات من النسخة الاحتياطية.`)) {
+        return;
+    }
+    
+    const btn = document.getElementById('confirmRestoreBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاستعادة...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/newstart/api/restore', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ backupFile })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('تم استعادة النسخة الاحتياطية بنجاح', 'success');
+            closeModal('restoreModal');
+            
+            // إعادة تحميل البيانات بعد الاستعادة
+            setTimeout(() => {
+                location.reload(); // إعادة تحميل الصفحة للتأكد من تحديث جميع البيانات
+            }, 2000);
+            
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error restoring backup:', error);
+        showAlert(`حدث خطأ أثناء الاستعادة: ${error.message}`, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+    
+    // تنظيف حقول الاستعادة عند الإغلاق
+    if (modalId === 'restoreModal') {
+        document.getElementById('restoreFileSelect').value = '';
+        document.getElementById('restorePreview').style.display = 'none';
+        document.getElementById('confirmRestoreBtn').disabled = true;
+    }
+}
+
+document.getElementById('restoreFileSelect').addEventListener('change', updateRestorePreview);
+
+
+// جعل الدوال متاحة عالمياً
+window.createBackup = createBackup;
+window.downloadBackup = downloadBackup;
+window.deleteBackup = deleteBackup;
+window.showRestoreModal = showRestoreModal;
+window.confirmRestore = confirmRestore;
+// عند عرض قسم الإعدادات
+
 
             // جعل الدوال متاحة عالمياً للاستدعاء من HTML
             window.showSection = showSection;
