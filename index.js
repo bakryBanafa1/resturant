@@ -3,8 +3,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
 const app = express();
+const fs = require('fs');
+const cron = require('node-cron');
+const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database("./database.db");
+let db = new sqlite3.Database("./database.db");
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -720,7 +723,7 @@ app.get('/newstart/api/users/:id', (req, res) => {
     });
 });
 app.post("/newstart/api/send-message", async (req, res) => {
-  
+  const { number, message } = req.body;
 console.log(number +message)
     try {
         const response = await fetch(`http://75.119.153.226:1111/send-message?number=${number}&message=${encodeURIComponent(message)}`);
@@ -732,6 +735,131 @@ console.log(number +message)
         console.error("خطأ أثناء إرسال الرسالة:", err);
         res.status(500).json({ success: false, error: "فشل في إرسال الرسالة" });
     }
+});
+function createBackup() {
+    const backupDir = path.join(__dirname, 'backups');
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir);
+    }
+
+    const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
+    const backupPath = path.join(backupDir, backupName);
+
+    const source = path.join(__dirname, 'database.db');
+    fs.copyFileSync(source, backupPath);
+    
+    console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
+    return backupPath;
+}
+
+cron.schedule('0 0 * * *', () => {
+    console.log('جاري إنشاء نسخة احتياطية يومية...');
+    createBackup();
+});
+
+// مسار لإنشاء نسخة احتياطية يدوية
+app.get('/newstart/api/backup', (req, res) => {
+    try {
+        const backupPath = createBackup();
+        res.json({ 
+            success: true,
+            message: 'تم إنشاء النسخة الاحتياطية بنجاح',
+            backupPath: path.basename(backupPath)
+        });
+    } catch (err) {
+        console.error('خطأ في النسخ الاحتياطي:', err);
+        res.status(500).json({ success: false, message: 'فشل في إنشاء النسخة الاحتياطية' });
+    }
+});
+
+// مسار لسرد النسخ الاحتياطية المتاحة
+app.get('/newstart/api/backups', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
+    if (!fs.existsSync(backupDir)) {
+        return res.json([]);
+    }
+
+    const files = fs.readdirSync(backupDir)
+        .filter(file => file.endsWith('.db'))
+        .map(file => ({
+            name: file,
+            size: fs.statSync(path.join(backupDir, file)).size,
+            date: fs.statSync(path.join(backupDir, file)).mtime
+        }))
+        .sort((a, b) => b.date - a.date);
+
+    res.json(files);
+});
+app.get('/newstart/api/backups/:filename', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
+    const filePath = path.join(backupDir, req.params.filename);
+    
+    if (fs.existsSync(filePath)) {
+        res.download(filePath);
+    } else {
+        res.status(404).send('الملف غير موجود');
+    }
+});
+
+// مسار لحذف نسخة احتياطية
+app.delete('/newstart/api/backups/:filename', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
+    const filePath = path.join(backupDir, req.params.filename);
+    
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        res.json({ success: true, message: 'تم حذف النسخة الاحتياطية' });
+    } else {
+        res.status(404).json({ success: false, message: 'الملف غير موجود' });
+    }
+});
+app.post('/newstart/api/restore', (req, res) => {
+    try {
+        const { backupFile } = req.body;
+        const backupDir = path.join(__dirname, 'backups');
+        const backupPath = path.join(backupDir, backupFile);
+        const currentDbPath = path.join(__dirname, 'database.db');
+
+        // التحقق من وجود الملف
+        if (!fs.existsSync(backupPath)) {
+            return res.status(404).json({ success: false, message: 'الملف غير موجود' });
+        }
+
+        // إيقاف قاعدة البيانات الحالية
+        db.close((err) => {
+            if (err) {
+                console.error('خطأ في إغلاق قاعدة البيانات:', err);
+            }
+
+            // نسخ الملف الاحتياطي إلى قاعدة البيانات الحالية
+            fs.copyFileSync(backupPath, currentDbPath);
+
+            // إعادة فتح قاعدة البيانات
+            const newDb = new sqlite3.Database(currentDbPath);
+
+            // إعادة تعيين اتصال قاعدة البيانات
+            db = newDb;
+
+            console.log('تم استعادة النسخة الاحتياطية بنجاح:', backupFile);
+            res.json({ 
+                success: true, 
+                message: 'تم استعادة النسخة الاحتياطية بنجاح' 
+            });
+        });
+    } catch (err) {
+        console.error('خطأ في الاستعادة:', err);
+        res.status(500).json({ success: false, message: 'فشل في استعادة النسخة الاحتياطية' });
+    }
+});
+
+// مسار للحصول على معلومات قاعدة البيانات (للتأكد من نجاح الاستعادة)
+app.get('/newstart/api/db-info', (req, res) => {
+    db.get("SELECT COUNT(*) as count FROM subscribers", (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'خطأ في جلب معلومات قاعدة البيانات' });
+        }
+        res.json({ subscribersCount: row.count });
+    });
 });
 // بدء الخادم
 const PORT = process.env.PORT || 3000;
