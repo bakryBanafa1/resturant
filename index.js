@@ -7,7 +7,7 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
+let db = new sqlite3.Database("/root/n8n-docker/app_data/newstartDB/database.db");
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
