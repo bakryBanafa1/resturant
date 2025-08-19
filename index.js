@@ -803,7 +803,7 @@ app.get('/newstart/api/backups/:filename', (req, res) => {
 
 // مسار لحذف نسخة احتياطية
 app.delete('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = '/root/n8n-docker/app_data/newstartDB';
+    const backupDir = '/usr/src/app/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
     
     if (fs.existsSync(filePath)) {
@@ -816,9 +816,9 @@ app.delete('/newstart/api/backups/:filename', (req, res) => {
 app.post('/newstart/api/restore', (req, res) => {
     try {
         const { backupFile } = req.body;
-        const backupDir = '/root/n8n-docker/app_data/newstartDB';
+        const backupDir = '/usr/src/app/newstartDB';
         const backupPath = path.join(backupDir, backupFile);
-        const currentDbPath = path.join(__dirname, 'database.db');
+        const currentDbPath = '/usr/src/app/newstartDB';
 
         // التحقق من وجود الملف
         if (!fs.existsSync(backupPath)) {
