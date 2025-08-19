@@ -1,16 +1,18 @@
 {
   "name": "food-subscription",
   "version": "1.0.0",
-  "description": "نظام إدارة الاشتراكات الغذائية",
-  "main": "server.js",
+  "description": "نظام إدارة الاشتراكات",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "sqlite3": "^5.0.2",
     "body-parser": "^1.19.0",
-    "nodemon": "^2.0.7"
+    "express": "^4.17.1",
+    "moment": "^2.30.1",
+    "node-cron": "^4.2.1",
+    "nodemon": "^2.0.7",
+    "sqlite3": "^5.0.2"
   }
 }
