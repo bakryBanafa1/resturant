@@ -738,7 +738,7 @@ console.log(number +message)
     }
 });
 function createBackup() {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir);
     }
@@ -775,7 +775,7 @@ app.get('/newstart/api/backup', (req, res) => {
 
 // مسار لسرد النسخ الاحتياطية المتاحة
 app.get('/newstart/api/backups', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     if (!fs.existsSync(backupDir)) {
         return res.json([]);
     }
@@ -792,7 +792,7 @@ app.get('/newstart/api/backups', (req, res) => {
     res.json(files);
 });
 app.get('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = '/usr/src/app/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
     
     if (fs.existsSync(filePath)) {
