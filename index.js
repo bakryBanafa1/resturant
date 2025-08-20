@@ -737,6 +737,7 @@ console.log(number +message)
         res.status(500).json({ success: false, error: "فشل في إرسال الرسالة" });
     }
 });
+/*
 function createBackup() {
     const backupDir = '/root/n8n-docker/app_data/newstartDB';
     if (!fs.existsSync(backupDir)) {
@@ -862,6 +863,7 @@ app.get('/newstart/api/db-info', (req, res) => {
         res.json({ subscribersCount: row.count });
     });
 });
+*/
 // بدء الخادم
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
