@@ -1,4 +1,4 @@
-// server.js version 1.0.3
+// server.js
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -7,28 +7,8 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-const dbDir = "/root/n8n-docker/app_data/newstartDB/database.db";
-const backupDir = path.join(dbDir, 'backups');
-
-// إنشاء المجلدات لو مش موجودة
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
-if (!fs.existsSync(backupDir)) {
-    fs.mkdirSync(backupDir, { recursive: true });
-}
-
-// المسار الأساسي لقاعدة البيانات
-let currentDbPath = path.join(dbDir, 'database.db');
-
-// فتح اتصال قاعدة البيانات
-let db = new sqlite3.Database(currentDbPath, (err) => {
-    if (err) {
-        console.error('خطأ في فتح قاعدة البيانات:', err.message);
-    } else {
-        console.log('تم الاتصال بقاعدة البيانات.');
-    }
-});
+let db = new sqlite3.Database("/root/n8n-docker/app_data/newstartDB/database.db");
+// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -54,9 +34,6 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
 // تعيين محرك العرض
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "html");
@@ -761,20 +738,21 @@ console.log(number +message)
     }
 });
 function createBackup() {
+    const backupDir = path.join(__dirname, 'backups');
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir);
+    }
+
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
     const backupPath = path.join(backupDir, backupName);
 
-    if (fs.existsSync(currentDbPath)) {
-        fs.copyFileSync(currentDbPath, backupPath);
-        console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
-    } else {
-        console.log('قاعدة البيانات غير موجودة، لم يتم إنشاء نسخة احتياطية.');
-    }
-
+    const source = path.join(__dirname, 'database.db');
+    fs.copyFileSync(source, backupPath);
+    
+    console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
     return backupPath;
 }
 
-// جدولة النسخة اليومية الساعة 12 بالليل
 cron.schedule('0 0 * * *', () => {
     console.log('جاري إنشاء نسخة احتياطية يومية...');
     createBackup();
@@ -784,7 +762,7 @@ cron.schedule('0 0 * * *', () => {
 app.get('/newstart/api/backup', (req, res) => {
     try {
         const backupPath = createBackup();
-        res.json({
+        res.json({ 
             success: true,
             message: 'تم إنشاء النسخة الاحتياطية بنجاح',
             backupPath: path.basename(backupPath)
@@ -797,6 +775,7 @@ app.get('/newstart/api/backup', (req, res) => {
 
 // مسار لسرد النسخ الاحتياطية المتاحة
 app.get('/newstart/api/backups', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
     if (!fs.existsSync(backupDir)) {
         return res.json([]);
     }
@@ -812,11 +791,10 @@ app.get('/newstart/api/backups', (req, res) => {
 
     res.json(files);
 });
-
-// تحميل نسخة احتياطية
 app.get('/newstart/api/backups/:filename', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
     const filePath = path.join(backupDir, req.params.filename);
-
+    
     if (fs.existsSync(filePath)) {
         res.download(filePath);
     } else {
@@ -824,10 +802,11 @@ app.get('/newstart/api/backups/:filename', (req, res) => {
     }
 });
 
-// حذف نسخة احتياطية
+// مسار لحذف نسخة احتياطية
 app.delete('/newstart/api/backups/:filename', (req, res) => {
+    const backupDir = path.join(__dirname, 'backups');
     const filePath = path.join(backupDir, req.params.filename);
-
+    
     if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         res.json({ success: true, message: 'تم حذف النسخة الاحتياطية' });
@@ -835,31 +814,37 @@ app.delete('/newstart/api/backups/:filename', (req, res) => {
         res.status(404).json({ success: false, message: 'الملف غير موجود' });
     }
 });
-
-// استعادة نسخة احتياطية
 app.post('/newstart/api/restore', (req, res) => {
     try {
         const { backupFile } = req.body;
+        const backupDir = path.join(__dirname, 'backups');
         const backupPath = path.join(backupDir, backupFile);
+        const currentDbPath = path.join(__dirname, 'database.db');
 
+        // التحقق من وجود الملف
         if (!fs.existsSync(backupPath)) {
             return res.status(404).json({ success: false, message: 'الملف غير موجود' });
         }
 
+        // إيقاف قاعدة البيانات الحالية
         db.close((err) => {
             if (err) {
                 console.error('خطأ في إغلاق قاعدة البيانات:', err);
             }
 
+            // نسخ الملف الاحتياطي إلى قاعدة البيانات الحالية
             fs.copyFileSync(backupPath, currentDbPath);
 
+            // إعادة فتح قاعدة البيانات
             const newDb = new sqlite3.Database(currentDbPath);
+
+            // إعادة تعيين اتصال قاعدة البيانات
             db = newDb;
 
             console.log('تم استعادة النسخة الاحتياطية بنجاح:', backupFile);
-            res.json({
-                success: true,
-                message: 'تم استعادة النسخة الاحتياطية بنجاح'
+            res.json({ 
+                success: true, 
+                message: 'تم استعادة النسخة الاحتياطية بنجاح' 
             });
         });
     } catch (err) {
@@ -868,7 +853,7 @@ app.post('/newstart/api/restore', (req, res) => {
     }
 });
 
-// معلومات قاعدة البيانات
+// مسار للحصول على معلومات قاعدة البيانات (للتأكد من نجاح الاستعادة)
 app.get('/newstart/api/db-info', (req, res) => {
     db.get("SELECT COUNT(*) as count FROM subscribers", (err, row) => {
         if (err) {
