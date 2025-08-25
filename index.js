@@ -788,7 +788,7 @@ console.log(number +message)
 });
 function createBackup() {
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
-    const backupPath = path.join(backupDir, backupName);
+    const backupPath = path.join("/usr/src/app/newstartDB/", backupName);
 
     if (fs.existsSync(currentDbPath)) {
         fs.copyFileSync(currentDbPath, backupPath);
