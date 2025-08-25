@@ -7,8 +7,28 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
-// Middleware
+const dbDir = "/usr/src/app/newstartDB/database.db";
+const backupDir = path.join(dbDir, 'backups');
+
+// إنشاء المجلدات لو مش موجودة
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
+if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+}
+
+// المسار الأساسي لقاعدة البيانات
+let currentDbPath = path.join(dbDir, 'database.db');
+
+// فتح اتصال قاعدة البيانات
+let db = new sqlite3.Database(currentDbPath, (err) => {
+    if (err) {
+        console.error('خطأ في فتح قاعدة البيانات:', err.message);
+    } else {
+        console.log('تم الاتصال بقاعدة البيانات.');
+    }
+});
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -34,6 +54,9 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
 // تعيين محرك العرض
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "html");
@@ -96,7 +119,13 @@ db.serialize(() => {
       password TEXT NOT NULL
   )`);
 });
-
+db.run(`CREATE TABLE IF NOT EXISTS logs (
+    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    username TEXT NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT
+)`);
 // إضافة مستخدم افتراضي
 db.run(
     `INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)`,
@@ -110,6 +139,9 @@ db.run(
 // Routes
 app.get("/newstart", (req, res) => {
     res.sendFile(path.join(__dirname, "login.html"));
+});
+app.get("/newstart/qrcode", (req, res) => {
+    res.sendFile(path.join(__dirname, "qrcode.html"));
 });
 app.get("/newstart/index", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
@@ -132,6 +164,7 @@ app.get("/newstart/api/subscribers", (req, res) => {
     );
 });
 
+// ✅ إضافة مشترك
 app.post("/newstart/api/subscribers", (req, res) => {
     const {
         name,
@@ -141,6 +174,7 @@ app.post("/newstart/api/subscribers", (req, res) => {
         subscription_type,
         meals_remaining,
         status,
+       actionUser, // ممكن تجيب من الجلسة
     } = req.body;
 
     db.run(
@@ -160,6 +194,10 @@ app.post("/newstart/api/subscribers", (req, res) => {
                 console.error("Error adding subscriber:", err);
                 return res.status(500).json({ error: err.message });
             }
+
+            // ✅ سجل العملية
+            addLog(actionUser, "إضافة مشترك", `تمت إضافة المشترك ${name} (${phone})`);
+
             res.json({
                 success: true,
                 subscriber_id: this.lastID,
@@ -180,7 +218,7 @@ app.get("/newstart/api/menu", (req, res) => {
 });
 
 app.post("/newstart/api/menu", (req, res) => {
-    const { item_name, price } = req.body;
+    const { item_name, price, username = "System" } = req.body;
     db.run(
         "INSERT INTO menu (item_name, price) VALUES (?, ?)",
         [item_name, price],
@@ -189,6 +227,9 @@ app.post("/newstart/api/menu", (req, res) => {
                 res.status(500).json({ error: err.message });
                 return;
             }
+
+            addLog(username, "إضافة قائمة طعام", `تمت إضافة ${item_name} بسعر ${price}`);
+
             res.json({ id: this.lastID });
         },
     );
@@ -211,7 +252,7 @@ app.get("/newstart/api/packages", (req, res) => {
 });
 
 app.post("/newstart/api/packages", (req, res) => {
-    const { package_name, price, meals_count, subscription_days } = req.body;
+    const { package_name, price, meals_count, subscription_days, actionUser } = req.body;
     db.run(
         `INSERT INTO packages (package_name, price, meals_count, subscription_days) 
          VALUES (?, ?, ?, ?)`,
@@ -221,6 +262,9 @@ app.post("/newstart/api/packages", (req, res) => {
                 res.status(500).json({ error: err.message });
                 return;
             }
+
+            addLog(actionUser, "إضافة باقة", `تمت إضافة باقة ${package_name}`);
+
             res.json({ id: this.lastID });
         },
     );
@@ -302,6 +346,7 @@ app.get("/newstart/api/packages/list", (req, res) => {
         res.json(rows);
     });
 });
+// ✅ تعديل مشترك
 app.put("/newstart/api/subscribers/:id", (req, res) => {
     const {
         name,
@@ -311,6 +356,7 @@ app.put("/newstart/api/subscribers/:id", (req, res) => {
         subscription_type,
         meals_remaining,
         status,
+        actionUser
     } = req.body;
 
     db.run(
@@ -338,6 +384,11 @@ app.put("/newstart/api/subscribers/:id", (req, res) => {
                 console.error("Error updating subscriber:", err);
                 return res.status(500).json({ error: err.message });
             }
+
+            if (this.changes > 0) {
+                addLog(actionUser, "تعديل مشترك", `تم تعديل بيانات المشترك ${name} (${phone})`);
+            }
+
             res.json({
                 success: true,
                 changes: this.changes,
@@ -366,26 +417,33 @@ app.get("/newstart/api/subscribers/:id", (req, res) => {
     );
 });
 app.delete("/newstart/api/subscribers/:id", (req, res) => {
-    db.run(
-        "DELETE FROM subscribers WHERE subscriber_id = ?",
-        [req.params.id],
-        function (err) {
-            if (err) {
-                console.error("Error deleting subscriber:", err);
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            if (this.changes === 0) {
-                res.status(404).json({ error: "المشترك غير موجود" });
-                return;
-            }
-            res.json({ success: true, changes: this.changes });
-        },
-    );
+    const username = req.body.actionUser || "System";
+
+    db.get("SELECT name FROM subscribers WHERE subscriber_id = ?", [req.params.id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        db.run(
+            "DELETE FROM subscribers WHERE subscriber_id = ?",
+            [req.params.id],
+            function (err) {
+                if (err) {
+                    console.error("Error deleting subscriber:", err);
+                    return res.status(500).json({ error: err.message });
+                }
+                if (this.changes === 0) {
+                    return res.status(404).json({ error: "المشترك غير موجود" });
+                }
+
+                addLog(username, "حذف مشترك", `تم حذف المشترك ${row?.name || req.params.id}`);
+
+                res.json({ success: true, changes: this.changes });
+            },
+        );
+    });
 });
 app.post("/newstart/api/subscribers/:id/deduct-meal", (req, res) => {
     // الحصول على اسم المستخدم من الجسم أو من بيانات الجلسة
-   const username = req.body.username || req.user?.username || "System";
+   const username = req.body.actionUser;
     
     db.serialize(() => {
         db.run("BEGIN TRANSACTION");
@@ -445,7 +503,7 @@ app.post("/newstart/api/subscribers/:id/deduct-meal", (req, res) => {
                                         .status(500)
                                         .json({ error: err.message });
                                 }
-
+                                addLog(username, "خصم وجبة", `تم خصم وجبة من المشترك ${req.body.subscriber_name}.`);
                                 db.run("COMMIT");
                                 res.json({
                                     success: true,
@@ -479,7 +537,7 @@ app.get("/newstart/api/packages/:id", (req, res) => {
 
 // تحديث باقة
 app.put("/newstart/api/packages/:id", (req, res) => {
-    const { package_name, price, meals_count, subscription_days } = req.body;
+    const { package_name, price, meals_count, subscription_days, actionUser } = req.body;
 
     db.run(
         `UPDATE packages SET 
@@ -498,26 +556,33 @@ app.put("/newstart/api/packages/:id", (req, res) => {
                 success: true,
                 changes: this.changes,
             });
+            addLog(actionUser, "تعديل باقة", `تم تعديل الباقة ${package_name || req.params.id}`);
         },
     );
 });
 
 // حذف باقة
+// ✅ حذف باقة
 app.delete("/newstart/api/packages/:id", (req, res) => {
-    db.run(
-        "DELETE FROM packages WHERE package_id = ?",
-        [req.params.id],
-        function (err) {
-            if (err) {
-                console.error("Error deleting package:", err);
-                return res.status(500).json({ error: err.message });
-            }
-            res.json({
-                success: true,
-                changes: this.changes,
-            });
-        },
-    );
+    const username = req.body.actionUser ;
+    db.get("SELECT package_name FROM packages WHERE package_id = ?", [req.params.id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        db.run(
+            "DELETE FROM packages WHERE package_id = ?",
+            [req.params.id],
+            function (err) {
+                if (err) {
+                    console.error("Error deleting package:", err);
+                    return res.status(500).json({ error: err.message });
+                }
+                if (this.changes > 0) {
+                    addLog(username, "حذف باقة", `تم حذف الباقة ${row?.package_name || req.params.id}`);
+                }
+                res.json({ success: true, changes: this.changes });
+            },
+        );
+    });
 });
 app.get("/newstart/api/subscribers/:id/report", (req, res) => {
     const subscriberId = req.params.id;
@@ -587,7 +652,7 @@ app.post('/newstart/api/login', (req, res) => {
                 message: 'كلمة المرور غير صحيحة' 
             });
         }
-        
+            addLog(username, "تسجيل دخول", "تم تسجيل الدخول بنجاح");
         // عند نجاح عملية الدخول
         res.json({
             success: true,
@@ -623,7 +688,7 @@ app.get('/newstart/api/users', (req, res) => {
 });
 // إضافة مستخدم جديد
 app.post('/newstart/api/users', (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, actionUser } = req.body; // 👈 المستخدم الحالي
     
     if (!username || !password) {
         return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
@@ -640,6 +705,9 @@ app.post('/newstart/api/users', (req, res) => {
                 console.error('Database error:', err);
                 return res.status(500).json({ error: 'خطأ في الخادم' });
             }
+
+            // 👇 هنا نسجل العملية باسم اللي قام بالفعل
+            addLog(actionUser || "System", "إضافة مستخدم", `تمت إضافة المستخدم ${username}`);
             
             res.json({
                 success: true,
@@ -652,8 +720,8 @@ app.post('/newstart/api/users', (req, res) => {
 // تحديث مستخدم
 app.put('/newstart/api/users/:id', (req, res) => {
     const userId = req.params.id;
-    const { username, password} = req.body;
-    
+    const { username, password, actionUser } = req.body;
+
     if (!username) {
         return res.status(400).json({ error: 'اسم المستخدم ' });
     }
@@ -668,7 +736,7 @@ app.put('/newstart/api/users/:id', (req, res) => {
     
     query += ' WHERE user_id = ?';
     params.push(userId);
-    
+    addLog(actionUser , "تعديل مستخدم", `تمت تعديل المستخدم ${username}`);
     db.run(query, params, function(err) {
         if (err) {
             if (err.message.includes('UNIQUE constraint failed')) {
@@ -688,19 +756,23 @@ app.put('/newstart/api/users/:id', (req, res) => {
 
 // حذف مستخدم
 app.delete('/newstart/api/users/:id', (req, res) => {
-    const userId = req.params.id;
-    
-    db.run('DELETE FROM users WHERE user_id = ?', [userId], function(err) {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'خطأ في الخادم' });
-        }
-        
-        if (this.changes === 0) {
-            return res.status(404).json({ error: 'المستخدم غير موجود' });
-        }
-        
-        res.json({ success: true });
+    const actionUser = req.body.actionUser || "System";
+
+    db.get("SELECT username FROM users WHERE user_id = ?", [req.params.id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        db.run('DELETE FROM users WHERE user_id = ?', [req.params.id], function(err) {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ error: 'خطأ في الخادم' });
+            }
+            
+            if (this.changes > 0) {
+                addLog(actionUser, "حذف مستخدم", `تم حذف المستخدم ${row?.username || req.params.id}`);
+            }
+            
+            res.json({ success: true });
+        });
     });
 });
 
@@ -727,7 +799,7 @@ app.post("/newstart/api/send-message", async (req, res) => {
   const { number, message } = req.body;
 console.log(number +message)
     try {
-        const response = await fetch(`http://75.119.153.226:1111/send-message?number=${number}&message=${encodeURIComponent(message)}`);
+        const response = await fetch(`https://resturantgateway-production.up.railway.app/send-message?number=${number}&message=${encodeURIComponent(message)}`);
         if (!response.ok) {
             throw new Error("فشل في إرسال الرسالة");
         }
@@ -737,23 +809,21 @@ console.log(number +message)
         res.status(500).json({ success: false, error: "فشل في إرسال الرسالة" });
     }
 });
-/*
 function createBackup() {
-    const backupDir = '/root/n8n-docker/app_data/newstartDB';
-    if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir);
-    }
-
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
     const backupPath = path.join(backupDir, backupName);
 
-    const source = path.join(__dirname, 'database.db');
-    fs.copyFileSync(source, backupPath);
-    
-    console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
+    if (fs.existsSync(currentDbPath)) {
+        fs.copyFileSync(currentDbPath, backupPath);
+        console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
+    } else {
+        console.log('قاعدة البيانات غير موجودة، لم يتم إنشاء نسخة احتياطية.');
+    }
+
     return backupPath;
 }
 
+// جدولة النسخة اليومية الساعة 12 بالليل
 cron.schedule('0 0 * * *', () => {
     console.log('جاري إنشاء نسخة احتياطية يومية...');
     createBackup();
@@ -763,7 +833,7 @@ cron.schedule('0 0 * * *', () => {
 app.get('/newstart/api/backup', (req, res) => {
     try {
         const backupPath = createBackup();
-        res.json({ 
+        res.json({
             success: true,
             message: 'تم إنشاء النسخة الاحتياطية بنجاح',
             backupPath: path.basename(backupPath)
@@ -776,7 +846,6 @@ app.get('/newstart/api/backup', (req, res) => {
 
 // مسار لسرد النسخ الاحتياطية المتاحة
 app.get('/newstart/api/backups', (req, res) => {
-    const backupDir = '/usr/src/app/newstartDB';
     if (!fs.existsSync(backupDir)) {
         return res.json([]);
     }
@@ -792,10 +861,11 @@ app.get('/newstart/api/backups', (req, res) => {
 
     res.json(files);
 });
+
+// تحميل نسخة احتياطية
 app.get('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = '/usr/src/app/newstartDB';
     const filePath = path.join(backupDir, req.params.filename);
-    
+
     if (fs.existsSync(filePath)) {
         res.download(filePath);
     } else {
@@ -803,11 +873,10 @@ app.get('/newstart/api/backups/:filename', (req, res) => {
     }
 });
 
-// مسار لحذف نسخة احتياطية
+// حذف نسخة احتياطية
 app.delete('/newstart/api/backups/:filename', (req, res) => {
-    const backupDir = path.join(__dirname, 'backups');
     const filePath = path.join(backupDir, req.params.filename);
-    
+
     if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         res.json({ success: true, message: 'تم حذف النسخة الاحتياطية' });
@@ -815,37 +884,31 @@ app.delete('/newstart/api/backups/:filename', (req, res) => {
         res.status(404).json({ success: false, message: 'الملف غير موجود' });
     }
 });
+
+// استعادة نسخة احتياطية
 app.post('/newstart/api/restore', (req, res) => {
     try {
         const { backupFile } = req.body;
-        const backupDir = path.join(__dirname, 'backups');
         const backupPath = path.join(backupDir, backupFile);
-        const currentDbPath = path.join(__dirname, 'database.db');
 
-        // التحقق من وجود الملف
         if (!fs.existsSync(backupPath)) {
             return res.status(404).json({ success: false, message: 'الملف غير موجود' });
         }
 
-        // إيقاف قاعدة البيانات الحالية
         db.close((err) => {
             if (err) {
                 console.error('خطأ في إغلاق قاعدة البيانات:', err);
             }
 
-            // نسخ الملف الاحتياطي إلى قاعدة البيانات الحالية
             fs.copyFileSync(backupPath, currentDbPath);
 
-            // إعادة فتح قاعدة البيانات
             const newDb = new sqlite3.Database(currentDbPath);
-
-            // إعادة تعيين اتصال قاعدة البيانات
             db = newDb;
 
             console.log('تم استعادة النسخة الاحتياطية بنجاح:', backupFile);
-            res.json({ 
-                success: true, 
-                message: 'تم استعادة النسخة الاحتياطية بنجاح' 
+            res.json({
+                success: true,
+                message: 'تم استعادة النسخة الاحتياطية بنجاح'
             });
         });
     } catch (err) {
@@ -854,7 +917,7 @@ app.post('/newstart/api/restore', (req, res) => {
     }
 });
 
-// مسار للحصول على معلومات قاعدة البيانات (للتأكد من نجاح الاستعادة)
+// معلومات قاعدة البيانات
 app.get('/newstart/api/db-info', (req, res) => {
     db.get("SELECT COUNT(*) as count FROM subscribers", (err, row) => {
         if (err) {
@@ -863,9 +926,42 @@ app.get('/newstart/api/db-info', (req, res) => {
         res.json({ subscribersCount: row.count });
     });
 });
-*/
+function addLog(username, action, details) {
+    const timestamp = new Date().toISOString().replace("T", " ").split(".")[0]; 
+    db.run(
+        `INSERT INTO logs (timestamp, username, action, details) VALUES (?, ?, ?, ?)`,
+        [timestamp, username, action, details],
+        (err) => {
+            if (err) {
+                console.error("Error inserting log:", err);
+            }
+        }
+    );
+}
+// جلب كل السجلات
+app.get("/api/logs", (req, res) => {
+    db.all(`SELECT * FROM logs ORDER BY log_id DESC`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        res.json(rows);
+    });
+});
+
+// جلب السجلات مع بحث
+app.get("/api/logs/search", (req, res) => {
+    const search = `%${req.query.q || ""}%`;
+    db.all(
+        `SELECT * FROM logs 
+         WHERE username LIKE ? OR action LIKE ? OR details LIKE ?
+         ORDER BY log_id DESC`,
+        [search, search, search],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: "Database error" });
+            res.json(rows);
+        }
+    );
+});
 // بدء الخادم
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port1 ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
