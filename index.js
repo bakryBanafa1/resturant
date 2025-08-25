@@ -8,6 +8,7 @@ const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
 let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
+let backupDir="/usr/src/app/newstartDB/";
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -789,7 +790,7 @@ console.log(number +message)
 function createBackup() {
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
     const backupPath = path.join("/usr/src/app/newstartDB/", backupName);
-
+    const currentDbPath = "/usr/src/app/newstartDB/";
     if (fs.existsSync(currentDbPath)) {
         fs.copyFileSync(currentDbPath, backupPath);
         console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
