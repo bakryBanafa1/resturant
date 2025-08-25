@@ -790,7 +790,7 @@ console.log(number +message)
 function createBackup() {
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
     const backupPath = path.join("/usr/src/app/newstartDB/", backupName);
-    const currentDbPath = "/usr/src/app/newstartDB/";
+    const currentDbPath = "/usr/src/app/newstartDB/database.db";
     if (fs.existsSync(currentDbPath)) {
         fs.copyFileSync(currentDbPath, backupPath);
         console.log(`تم إنشاء نسخة احتياطية: ${backupPath}`);
@@ -878,7 +878,7 @@ app.post('/newstart/api/restore', (req, res) => {
                 console.error('خطأ في إغلاق قاعدة البيانات:', err);
             }
 
-            fs.copyFileSync(backupPath, currentDbPath);
+            fs.copyFileSync(backupPath, "/usr/src/app/newstartDB/database.db");
 
             const newDb = new sqlite3.Database(currentDbPath);
             db = newDb;
