@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title> V 1.0.2 نظام إدارة الاشتراكات </title>
+        <title>نظام إدارة الاشتراكات الغذائية</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
             rel="stylesheet"
@@ -14,7 +14,7 @@
         />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-           
+            /* أنماط CSS معدلة */
             :root {
                 --primary: #2c786c;
                 --secondary: #004445;
@@ -47,7 +47,7 @@
                 transition: all 0.3s ease;
             }
 
-            /* الشريط الجانبي  */
+            /* الشريط الجانبي - تم التعديل */
             .sidebar {
                 background: linear-gradient(
                     to bottom,
@@ -745,6 +745,37 @@
     padding: 5px 10px;
     font-size: 0.85rem;
 }
+#clientsList tr {
+    cursor: pointer;
+}
+
+#clientsList tr:hover {
+    background-color: #f5f5f5;
+}
+
+#notificationStatus {
+    font-size: 14px;
+    color: var(--gray);
+}
+
+/* تخصيص خانة الاختيار */
+#clientsList input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* تصميم responsive للجدول */
+@media (max-width: 768px) {
+    #clientsList table {
+        font-size: 0.9rem;
+    }
+    
+    #clientsList th:nth-child(2),
+    #clientsList td:nth-child(2) {
+        display: none;
+    }
+}
         </style>
     </head>
     <body>
@@ -785,8 +816,14 @@
                         <i class="fas fa-chart-bar"></i>
                         <span>التقارير</span>
                     </li>
+                    <li id="logsTab">
+        <i class="fas fa-history"></i> السجلات
+    </li>
                     <li id="usersTab">
     <i class="fas fa-users-cog"></i> إدارة المستخدمين
+</li>
+<li id="notificationsTab">
+    <i class="fas fa-bell"></i> الإشعارات
 </li>
                  <li id="settingsTab">
     <i class="fas fa-cog"></i> الإعدادات
@@ -1032,7 +1069,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>ID</th>
                                     <th>الاسم</th>
                                     <th>رقم الجوال</th>
                                     <th>نوع الاشتراك</th>
@@ -1074,6 +1111,45 @@
 
     <div id="reportResult" style="margin-top: 30px">
         <!-- سيتم عرض الإحصائية والتفاصيل هنا -->
+    </div>
+</div>
+<div id="logsContent" class="section" style="display: none">
+    <div class="section-header">
+        <h3 class="section-title">سجلات النظام</h3>
+        <button class="btn btn-primary" onclick="loadLogs()">
+            <i class="fas fa-sync-alt"></i> تحديث
+        </button>
+    </div>
+    <div class="search-filter" style="margin-bottom: 15px">
+        <input
+            type="text"
+            id="logsSearch"
+            class="form-control"
+            placeholder="ابحث في السجلات..."
+            style="width: 300px; display: inline-block"
+        />
+        <button class="btn btn-primary" onclick="filterLogs()">
+            <i class="fas fa-search"></i> بحث
+        </button>
+        <button class="btn btn-danger" onclick="resetLogsFilter()">
+            <i class="fas fa-times"></i> إعادة تعيين
+        </button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>التاريخ والوقت</th>
+                    <th>المستخدم</th>
+                    <th>العملية</th>
+                    <th>التفاصيل</th>
+                </tr>
+            </thead>
+            <tbody id="logsTableBody">
+                <!-- سيتم ملؤها بالبيانات -->
+            </tbody>
+        </table>
     </div>
 </div>
 <div id="usersContent" class="section" style="display: none">
@@ -1130,10 +1206,10 @@
                 <i class="fas fa-download"></i> إنشاء نسخة احتياطية الآن
             </button>
             
-            <button class="btn btn-warning" onclick="showRestoreModal()" style="margin-left: 10px;">
+          <!--  <button class="btn btn-warning" onclick="showRestoreModal()" style="margin-left: 10px;">
                 <i class="fas fa-upload"></i> استعادة نسخة احتياطية
             </button>
-            
+            -->
             <div class="form-group" style="margin-top: 20px">
                
             </div>
@@ -1157,6 +1233,55 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+<!-- قسم الإشعارات -->
+<div id="notificationsContent" class="section" style="display: none">
+    <div class="section-header">
+        <h3 class="section-title">إرسال الإشعارات</h3>
+    </div>
+    
+    <div class="form-group">
+        <label for="notificationMessage">نص الرسالة:</label>
+        <textarea 
+            id="notificationMessage" 
+            class="form-control" 
+            rows="5" 
+            placeholder="اكتب نص الرسالة هنا..."
+            style="width: 100%; resize: vertical;"
+        ></textarea>
+    </div>
+    
+    <div class="form-group" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h4>اختر العملاء المراد إرسال الإشعار لهم:</h4>
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="selectAllClients" onchange="toggleSelectAll(this)">
+                تحديد الكل
+            </label>
+        </div>
+        
+        <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="50px">تحديد</th>
+                        <th>اسم العميل</th>
+                        <th>رقم الجوال</th>
+                    </tr>
+                </thead>
+                <tbody id="clientsList">
+                    <!-- سيتم ملؤها بالبيانات -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="form-group" style="margin-top: 20px; text-align: left;">
+        <button id="sendNotificationBtn" class="btn btn-primary" onclick="sendNotifications()">
+            <i class="fas fa-paper-plane"></i> إرسال الإشعار
+        </button>
+        <span id="notificationStatus" style="margin-right: 15px;"></span>
     </div>
 </div>
 <!-- نافذة مودال الاستعادة -->
@@ -1421,7 +1546,7 @@
         </div>
         <script>
             const GOOGLE_SCRIPT_URL =
-                "https://script.google.com/macros/s/AKfycbzKeunIKZtfpe9oHHdAjYz0NRs4TTKU73ANtGUySefEkTmNp5Iv6yoWH4y8hX-2aPGhhg/exec";
+                "https://script.google.com/macros/s/AKfycbzKILlKoHN7jHoboi2KCMOpchcnAl2CH00Nieb5XWx-LIyEDL4ERcm1p_M3EhHzWjGi2Q/exec";
             // public/js/script.js
             document.addEventListener("DOMContentLoaded", function () {
                  const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
@@ -1609,8 +1734,13 @@ document.getElementById("cancelUserBtn").addEventListener("click", () => {
 });
 
 document.getElementById("userForm").addEventListener("submit", handleUserSubmit);
-
+// في دالة setupEventHandlers، إضافة مستمع الحدث لزر السجلات
+  document.getElementById("logsTab").addEventListener("click", showLogsSection);
 // دالة لتحميل المستخدمين
+document.getElementById("notificationsTab").addEventListener("click", () => {
+    showSection("notificationsContent");
+    loadClientsForNotifications();
+});
 function loadUsers(search = "") {
     fetch(`/newstart/api/users?search=${encodeURIComponent(search)}`)
         .then(response => {
@@ -1686,7 +1816,6 @@ async function handleUserSubmit(e) {
     const username = document.getElementById("newUsername").value;
     const password = document.getElementById("newPassword").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
-   // const role = document.getElementById("userRole").value;
     const isEditMode = !!userId;
     
     // التحقق من تطابق كلمات المرور (للمستخدمين الجدد فقط)
@@ -1695,7 +1824,11 @@ async function handleUserSubmit(e) {
         return;
     }
     
-    const formData = { username};
+    // إنشاء البيانات التي سترسل للـ API
+    const formData = {
+        username,
+        actionUser: getActionUser() // إضافة المستخدم الذي يقوم بالإجراء
+    };
     if (!isEditMode || password) {
         formData.password = password;
     }
@@ -1706,9 +1839,7 @@ async function handleUserSubmit(e) {
     try {
         const response = await fetch(url, {
             method: method,
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)
         });
         
@@ -1730,7 +1861,6 @@ async function handleUserSubmit(e) {
         showAlert(error.message, "error");
     }
 }
-
 // دالة لتعديل المستخدم
 async function editUser(userId) {
     try {
@@ -1752,7 +1882,11 @@ async function editUser(userId) {
 function deleteUser(userId, username) {
     if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) {
         fetch(`/newstart/api/users/${userId}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ actionUser: getActionUser() }) // هنا يمرر اليوزر
         })
         .then(response => response.json())
         .then(data => {
@@ -1975,82 +2109,57 @@ window.resetUserFilter = resetUserFilter;
                     });
             }
 
-             async function loadSubscriptionRequests() {
-                try {
-                    const response = await fetch(
-                        `${GOOGLE_SCRIPT_URL}?action=getOrders`,
-                    );
+            async function loadSubscriptionRequests() {
+    try {
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`);
+        if (!response.ok) throw new Error(`خطأ في الاستجابة: ${response.status}`);
+        
+        const data = await response.json();
+        const tableBody = document.getElementById("subscriptionRequestsTableBody");
+        tableBody.innerHTML = "";
 
-                    if (!response.ok) {
-                        throw new Error(`خطأ في الاستجابة: ${response.status}`);
-                    }
+        let requestsArray = [];
+        if (Array.isArray(data)) requestsArray = data;
+        else if (typeof data === "object" && data !== null) 
+            requestsArray = Object.keys(data).map(key => data[key]);
 
-                    const data = await response.json();
+        if (requestsArray.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center">لا توجد طلبات حالية</td></tr>`;
+            return;
+        }
 
-                    const tableBody = document.getElementById(
-                        "subscriptionRequestsTableBody",
-                    );
-                    tableBody.innerHTML = "";
+        requestsArray.forEach((request, index) => {
+            const requestData = {
+                id: request.id || request.id || "غير محدد", // تأكد من وجود ID
+                name: request.name || request.الاسم || "غير محدد",
+                phone: request.phone || request.رقم_الجوال || "غير محدد",
+                package: request.package || request.نوع_الاشتراك || "غير محدد",
+                status: request.status || request.الحالة || "قيد الانتظار"
+            };
 
-                    // تحويل البيانات إلى مصفوفة إذا كانت كائنًا
-                    let requestsArray = [];
-                    if (Array.isArray(data)) {
-                        requestsArray = data;
-                    } else if (typeof data === "object" && data !== null) {
-                        requestsArray = Object.keys(data).map(
-                            (key) => data[key],
-                        );
-                    }
-
-                    if (requestsArray.length === 0) {
-                        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center">لا توجد طلبات حالية</td></tr>`;
-                        return;
-                    }
-
-                    requestsArray.forEach((request, index) => {
-                        const requestData = {
-                            name: request.name || request.الاسم || "غير محدد",
-                            phone:
-                                request.phone ||
-                                request.رقم_الجوال ||
-                                "غير محدد",
-                            package:
-                                request.package ||
-                                request.نوع_الاشتراك ||
-                                "غير محدد",
-                            status:
-                                request.status ||
-                                request.الحالة ||
-                                "قيد الانتظار",
-                        };
-
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${index + 1}</td>
-                            <td>${requestData.name}</td>
-                            <td>${requestData.phone}</td>
-                            <td>${requestData.package}</td>
-                            <td>${requestData.status}</td>
-                            <td>
-                                <button class="btn btn-success" onclick="approveRequest('${requestData.phone}', '${requestData.name}', '${requestData.package}')">
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${requestData.id}</td>
+                <td>${requestData.name}</td>
+                <td>${requestData.phone}</td>
+                <td>${requestData.package}</td>
+                <td>${requestData.status}</td>
+                <td>
+                  <button class="btn btn-success" onclick="approveRequest('${requestData.phone}', '${requestData.name}', '${requestData.package}', '${requestData.id}')">
     <i class="fas fa-check"></i> حفظ
 </button>
-                                <button class="btn btn-danger" 
-                                        onclick="rejectRequest('${requestData.phone}')">
-                                    <i class="fas fa-times"></i> حذف
-                                </button>
-                            </td>
-                        `;
-                        tableBody.appendChild(tr);
-                    });
-                } catch (error) {
-                    console.error("تفاصيل الخطأ:", error);
-                    showAlert(
-                        `حدث خطأ أثناء جلب طلبات الاشتراك: ${error.message}`,
-                        "error",
-                    );
-                }
-            }
+                    <button class="btn btn-danger" onclick="rejectRequest('${requestData.id}')">
+                        <i class="fas fa-times"></i> حذف
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("تفاصيل الخطأ:", error);
+        showAlert(`حدث خطأ أثناء جلب طلبات الاشتراك: ${error.message}`, "error");
+    }
+}
 
             function openSubscriberModal(subscriber = null) {
                 const modal = document.getElementById("subscriberModal");
@@ -2176,11 +2285,15 @@ window.resetUserFilter = resetUserFilter;
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = "none";
             }
-
-    async function handleSubscriberSubmit(e) {
+window.isSubmittingSubscriber = false;
+   async function handleSubscriberSubmit(e) {
     e.preventDefault();
-
-     const btn = document.getElementById("saveSubscriberBtn");
+      if (window.isSubmittingSubscriber) {
+        console.warn("تم منع إرسال مزدوج — العملية جارية بالفعل");
+        return;
+    }
+    window.isSubmittingSubscriber = true;
+    const btn = document.getElementById("saveSubscriberBtn");
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
     btn.disabled = true;
@@ -2191,23 +2304,34 @@ window.resetUserFilter = resetUserFilter;
         let phone = document.getElementById("phone").value;
         const name = document.getElementById("name").value;
         const status = document.getElementById("status").value;
+        const requestId = document.querySelector('input[name="requestId"]')?.value;
 
-        // تنظيف الرقم من أي أحرف غير رقمية
-        phone = phone.replace(/\D/g, '');
+         // تنظيف الرقم من أي أحرف غير رقمية
+        phone = phone.replace(/\D/g, ''); // حذف أي أحرف غير رقمية
 
-        // معالجة الرقم - الحل الجديد
-        if (phone.startsWith('05')) {
-            // إذا كان الرقم يبدأ بـ 05
-            phone = '966' + phone.substring(1); // احذف 05 وأضف 966
-        } else if (phone.startsWith('5')) {
-            // إذا كان الرقم يبدأ بـ 5 فقط
-            phone = '966' + phone.substring(1); // احذف 5 وأضف 966
-        } else if (!phone.startsWith('966')) {
-            // لأي رقم آخر لا يبدأ بـ 966
-            phone = '966' + phone; // أضف 966 افتراضيًا
+        // إذا بدأ بـ 00 نحولها إلى بدون
+        if (phone.startsWith("00")) {
+            phone = phone.substring(2);
         }
 
+        // الآن نراجع إذا كان سعودي أو دولي
+        if (phone.startsWith("9665")) {
+            // جاهز - رقم سعودي صحيح
+        } else if (phone.startsWith("05")) {
+            phone = "966" + phone.substring(1);
+        } else if (phone.startsWith("5")) {
+            phone = "966" + phone;
+        } else if (phone.startsWith("966")) {
+            // جاهز
+        } else {
+            // رقم دولي آخر - يترك كما هو (مثال 20 لمصر)
+        }
+
+
         console.log('رقم الهاتف بعد التنسيق:', phone); // للتأكد من الصيغة الصحيحة
+
+       
+
 
         // باقي كود تحضير البيانات...
         const startDate = document.getElementById("startDate").value;
@@ -2218,18 +2342,18 @@ window.resetUserFilter = resetUserFilter;
 
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + parseInt(days || 0));
-
+const currentUser = localStorage.getItem("username"); 
         const formData = {
             name: name,
-            phone: phone,  // سيحتوي على الرقم مع المفتاح الدولي
+            phone: phone,
             start_date: startDate,
             end_date: endDate.toISOString().split("T")[0],
             subscription_type: subscriptionType.value,
             meals_remaining: meals,
             status: status,
+             actionUser: currentUser
         };
-
-        // باقي كود الإرسال...
+        
         const method = isEditMode ? "PUT" : "POST";
         const url = isEditMode ? `/newstart/api/subscribers/${subscriberId}` : "/newstart/api/subscribers";
 
@@ -2279,6 +2403,17 @@ window.resetUserFilter = resetUserFilter;
             }
         }
 
+        // إذا كان هناك طلب مرتبط، قم بحذفه تلقائيًا بعد الحفظ الناجح
+        if (requestId) {
+            try {
+                // استخدم دالة حذف مباشرة بدون تأكيد
+                await deleteRequestSilently(requestId);
+            } catch (error) {
+                console.error("فشل في حذف الطلب:", error);
+                // لا نعرض رسالة خطأ للمستخدم لأن الحفظ كان ناجحًا
+            }
+        }
+
         // تحديث الواجهة
         closeModal("subscriberModal");
         await loadSubscribers();
@@ -2290,8 +2425,80 @@ window.resetUserFilter = resetUserFilter;
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
+        window.isSubmittingSubscriber = false;
     }
 }
+
+// دالة جديدة لحذف الطلب بدون أي تأكيد أو رسائل
+async function deleteRequestSilently(id) {
+    if (!id) return;
+
+    try {
+        const url = `${GOOGLE_SCRIPT_URL}?action=deleteOrder&id=${encodeURIComponent(id)}`;
+        const response = await fetch(url, { method: "GET", cache: "no-cache" });
+
+        if (!response.ok) {
+            throw new Error(`استجابة الخادم: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message || "فشل حذف الطلب");
+        }
+        
+        console.log("تم حذف الطلب بنجاح:", id);
+    } catch (err) {
+        console.error("خطأ أثناء الحذف التلقائي للطلب:", err);
+        throw err; // نعيد الخطأ للدالة المت calling
+    }
+}
+
+// دالة approveRequest المعدلة
+ function approveRequest(phone, name, packageName, requestId) {
+                // فتح نافذة إضافة مشترك جديدة
+                openSubscriberModal();
+                
+                // تعبئة البيانات التلقائية من الطلب
+                document.getElementById("name").value = name || "";
+                document.getElementById("phone").value = phone || "";
+                
+                // تخزين معرف الطلب في عنصر مخفي في النموذج
+                let requestIdInput = document.querySelector('input[name="requestId"]');
+                if (!requestIdInput) {
+                    requestIdInput = document.createElement("input");
+                    requestIdInput.type = "hidden";
+                    requestIdInput.name = "requestId";
+                    document.getElementById("subscriberForm").appendChild(requestIdInput);
+                }
+                requestIdInput.value = requestId;
+                
+                // تعيين تاريخ البداية لليوم
+                const today = new Date().toISOString().split("T")[0];
+                document.getElementById("startDate").value = today;
+
+                // البحث عن الباقة المحددة وتحديدها
+                if (packageName && packageName !== "غير محدد") {
+                    setTimeout(() => {
+                        const subscriptionType = document.getElementById("subscriptionType");
+                        for (let i = 0; i < subscriptionType.options.length; i++) {
+                            if (subscriptionType.options[i].text.includes(packageName)) {
+                                subscriptionType.selectedIndex = i;
+                                updateEndDate();
+                                break;
+                            }
+                        }
+                    }, 500);
+                }
+
+                // إزالة أي معالج حدث مسبق لمنع التكرار
+                const subscriberForm = document.getElementById("subscriberForm");
+                const newForm = subscriberForm.cloneNode(true);
+                subscriberForm.parentNode.replaceChild(newForm, subscriberForm);
+                
+                // إعادة ربط المعالج الأصلي
+                document.getElementById("subscriberForm").addEventListener("submit", handleSubscriberSubmit);
+            }
             function handleItemSubmit(e) {
                 e.preventDefault();
 
@@ -2332,6 +2539,7 @@ window.resetUserFilter = resetUserFilter;
                     meals_count: document.getElementById("package_meals").value,
                     subscription_days:
                         document.getElementById("package_duration").value,
+                   actionUser: getActionUser()
                 };
 
                 const url = isEditMode
@@ -2339,41 +2547,41 @@ window.resetUserFilter = resetUserFilter;
                     : "/newstart/api/packages";
                 const method = isEditMode ? "PUT" : "POST";
 
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(formData),
-                })
-                    .then((response) => {
-                        if (!response.ok) {
-                            return response.json().then((err) => {
-                                throw new Error(
-                                    err.error || "حدث خطأ أثناء حفظ الباقة",
-                                );
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then((data) => {
-                        showAlert(
-                            isEditMode
-                                ? "تم تحديث الباقة بنجاح"
-                                : "تم إضافة الباقة بنجاح",
-                            "success",
-                        );
-                        closeModal("packageModal");
-                        loadPackages();
+               fetch(url, {
+    method: method,
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+})
+    .then((response) => {
+        if (!response.ok) {
+            return response.json().then((err) => {
+                throw new Error(
+                    err.error || "حدث خطأ أثناء حفظ الباقة",
+                );
+            });
+        }
+        return response.json();
+    })
+    .then((data) => {
+        showAlert(
+            isEditMode
+                ? "تم تحديث الباقة بنجاح"
+                : "تم إضافة الباقة بنجاح",
+            "success",
+        );
+        closeModal("packageModal");
+        loadPackages();
 
-                        // إعادة تعيين النموذج بعد الحفظ
-                        document.getElementById("packageForm").reset();
-                        document.getElementById("edit_package_id").value = "";
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                        showAlert(error.message, "error");
-                    });
+        // إعادة تعيين النموذج بعد الحفظ
+        document.getElementById("packageForm").reset();
+        document.getElementById("edit_package_id").value = "";
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+        showAlert(error.message, "error");
+    });
             }
 
             function editSubscriber(id) {
@@ -2487,42 +2695,63 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                 link.href = canvas.toDataURL("image/png");
                 link.click();
             }
+function approveRequest(phone, name, packageName, requestId) {
+    // فتح نافذة إضافة مشترك جديدة
+    openSubscriberModal();
+    
+    // تعبئة البيانات التلقائية من الطلب
+    document.getElementById("name").value = name || "";
+    document.getElementById("phone").value = phone || "";
+    
+    // تخزين معرف الطلب في عنصر مخفي في النموذج
+    let requestIdInput = document.querySelector('input[name="requestId"]');
+    if (!requestIdInput) {
+        requestIdInput = document.createElement("input");
+        requestIdInput.type = "hidden";
+        requestIdInput.name = "requestId";
+        document.getElementById("subscriberForm").appendChild(requestIdInput);
+    }
+    requestIdInput.value = requestId;
+    
+    // تعيين تاريخ البداية لليوم
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("startDate").value = today;
 
-            function approveRequest(phone, name, packageName) {
-                // فتح نافذة إضافة مشترك جديدة
-                openSubscriberModal();
-
-                // تعبئة البيانات التلقائية من الطلب
-                document.getElementById("name").value = name || "";
-                document.getElementById("phone").value = phone || "";
-
-                // تعيين تاريخ البداية لليوم
-                const today = new Date().toISOString().split("T")[0];
-                document.getElementById("startDate").value = today;
-
-                // البحث عن الباقة المحددة وتحديدها
-                if (packageName && packageName !== "غير محدد") {
-                    setTimeout(() => {
-                        const subscriptionType =
-                            document.getElementById("subscriptionType");
-                        for (
-                            let i = 0;
-                            i < subscriptionType.options.length;
-                            i++
-                        ) {
-                            if (
-                                subscriptionType.options[i].text.includes(
-                                    packageName,
-                                )
-                            ) {
-                                subscriptionType.selectedIndex = i;
-                                updateEndDate(); // تحديث تاريخ الانتهاء تلقائياً
-                                break;
-                            }
-                        }
-                    }, 500); // تأخير بسيط لضمان تحميل الباقات
+    // البحث عن الباقة المحددة وتحديدها
+    if (packageName && packageName !== "غير محدد") {
+        setTimeout(() => {
+            const subscriptionType = document.getElementById("subscriptionType");
+            for (let i = 0; i < subscriptionType.options.length; i++) {
+                if (subscriptionType.options[i].text.includes(packageName)) {
+                    subscriptionType.selectedIndex = i;
+                    updateEndDate();
+                    break;
                 }
             }
+        }, 500);
+    }
+
+
+    
+    // تعديل معالج النموذج لإضافة وظيفة حذف الطلب بعد الحفظ
+    const originalSubmitHandler = subscriberForm.onsubmit;
+    subscriberForm.onsubmit = async function(e) {
+        e.preventDefault();
+        
+        // تنفيذ المعالج الأصلي أولاً
+        if (originalSubmitHandler) {
+            await originalSubmitHandler(e);
+        } else {
+            await handleSubscriberSubmit(e);
+        }
+        
+        // إذا تم حفظ المشترك بنجاح، نقوم بحذف الطلب
+        const requestId = document.querySelector('input[name="requestId"]').value;
+
+        // إعادة تحميل قائمة طلبات الاشتراك
+        loadSubscriptionRequests();
+    };
+}
             // دالة جديدة لفتح النافذة مع البيانات
             function openSubscriberModalWithData(data) {
                 const modal = document.getElementById("subscriberModal");
@@ -2589,25 +2818,37 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                     });
             }
 
-            function rejectRequest(orderId) {
-                if (confirm("هل أنت متأكد من رفض هذا الطلب؟")) {
-                    fetch(`/newstart/api/orders/${orderId}/reject`, {
-                        method: "POST",
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                loadSubscriptionRequests();
-                                showAlert("تم رفض الطلب بنجاح", "success");
-                            } else {
-                                throw new Error("Failed to reject request");
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            showAlert("حدث خطأ أثناء رفض الطلب", "error");
-                        });
-                }
-            }
+           
+    async function rejectRequest(id) {
+    if (!id) {
+        showAlert("معرّف الطلب غير صالح", "error");
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من حذف الطلب رقم ${id}؟`)) return;
+
+    try {
+        await deleteRequestSilently(id);
+        showAlert("تم حذف الطلب بنجاح", "success");
+        loadSubscriptionRequests();
+    } catch (error) {
+        console.error("Error:", error);
+        showAlert(`حدث خطأ أثناء الحذف: ${error.message}`, "error");
+    }
+}
+      let ACTIONUSER = "System"; // القيمة الافتراضية
+
+document.addEventListener('DOMContentLoaded', () => {
+    const savedSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
+    if (savedSession) {
+        ACTIONUSER = JSON.parse(savedSession).username || "System";
+    }
+});
+        
+        // تحميل البيانات عند فتح الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSubscriptionRequests();
+        });
 
             function filterSubscribers() {
                 const search =
@@ -2675,36 +2916,40 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                     });
             }
             function deleteSubscriber(id) {
-                if (confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
-                    const btn = event.target.closest("button");
-                    const originalHtml = btn.innerHTML;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    btn.disabled = true;
+    if (confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
+        const btn = event.target.closest("button");
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
 
-                    fetch(`/newstart/api/subscribers/${id}`, {
-                        method: "DELETE",
-                    })
-                        .then((response) => {
-                            if (!response.ok) throw new Error("فشل في الحذف");
-                            return response.json();
-                        })
-                        .then((data) => {
-                            showAlert("تم حذف المشترك بنجاح", "success");
-                            loadSubscribers();
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            showAlert(
-                                "حدث خطأ أثناء الحذف: " + error.message,
-                                "error",
-                            );
-                        })
-                        .finally(() => {
-                            btn.innerHTML = originalHtml;
-                            btn.disabled = false;
-                        });
-                }
-            }
+        fetch(`/newstart/api/subscribers/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ actionUser: ACTIONUSER }) // تمرير اسم المستخدم الحالي
+        })
+        .then((response) => {
+            if (!response.ok) throw new Error("فشل في الحذف");
+            return response.json();
+        })
+        .then((data) => {
+            showAlert("تم حذف المشترك بنجاح", "success");
+            loadSubscribers();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showAlert(
+                "حدث خطأ أثناء الحذف: " + error.message,
+                "error",
+            );
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+    }
+}
             function deductMeal(
                 subscriberId,
                 subscriberName,
@@ -2724,6 +2969,7 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                         body: JSON.stringify({
                             subscriber_name: subscriberName,
                             subscription_type: subscriptionType,
+                            actionUser: ACTIONUSER
                         }),
                     })
                         .then((response) => {
@@ -2787,28 +3033,34 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
             }
 
             // دالة حذف الباقة
-            function deletePackage(packageId, packageName) {
-                if (confirm(`هل أنت متأكد من حذف باقة "${packageName}"؟`)) {
-                    fetch(`/newstart/api/packages/${packageId}`, {
-                        method: "DELETE",
-                    })
-                        .then((response) => {
-                            if (!response.ok) throw new Error("فشل في الحذف");
-                            return response.json();
-                        })
-                        .then((data) => {
-                            showAlert("تم حذف الباقة بنجاح", "success");
-                            loadPackages();
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            showAlert(
-                                `حدث خطأ أثناء الحذف: ${error.message}`,
-                                "error",
-                            );
-                        });
-                }
-            }
+           function deletePackage(packageId, packageName) {
+    if (confirm(`هل أنت متأكد من حذف باقة "${packageName}"؟`)) {
+       
+          const currentUser = getActionUser(); 
+        fetch(`/newstart/api/packages/${packageId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ actionUser: currentUser }) // تمرير اسم المستخدم
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("فشل في الحذف");
+                return response.json();
+            })
+            .then((data) => {
+                showAlert("تم حذف الباقة بنجاح", "success");
+                loadPackages();
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                showAlert(
+                    `حدث خطأ أثناء الحذف: ${error.message}`,
+                    "error",
+                );
+            });
+    }
+}
 
             // دالة مساعدة لجلب الطلبات
             async function fetchRequests() {
@@ -3007,9 +3259,10 @@ async function loadBackups() {
                     <button class="btn btn-primary btn-sm" onclick="downloadBackup('${backup.name}')">
                         <i class="fas fa-download"></i> تنزيل
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteBackup('${backup.name}')">
+                 <!--   <button class="btn btn-danger btn-sm" onclick="deleteBackup('${backup.name}')">
                         <i class="fas fa-trash"></i> حذف
                     </button>
+                    -->
                 </td>
             `;
             list.appendChild(tr);
@@ -3167,7 +3420,204 @@ function closeModal(modalId) {
         document.getElementById('confirmRestoreBtn').disabled = true;
     }
 }
+async function loadLogs(search = "") {
+    const tbody = document.getElementById("logsTableBody");
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">جاري التحميل...</td></tr>`;
 
+    let url = "/api/logs";
+    if (search) url = `/api/logs/search?q=${encodeURIComponent(search)}`;
+
+    try {
+        const res = await fetch(url);
+        const logs = await res.json();
+
+        tbody.innerHTML = "";
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">لا توجد سجلات</td></tr>`;
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${log.log_id}</td>
+                <td>${log.timestamp}</td>
+                <td>${log.username}</td>
+                <td>${log.action}</td>
+                <td>${log.details}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red">خطأ في تحميل السجلات</td></tr>`;
+    }
+}
+
+// دالة لعرض قسم السجلات
+function showLogsSection() {
+    showSection("logsContent");
+    loadLogs();
+}
+
+// دالة لتصفية السجلات
+function filterLogs() {
+    const search = document.getElementById("logsSearch").value;
+    loadLogs(search);
+}
+
+// دالة لإعادة تعيين تصفية السجلات
+function resetLogsFilter() {
+    document.getElementById("logsSearch").value = "";
+    loadLogs();
+}
+
+// دالة لتصفية السجلات
+function filterLogs() {
+    const search = document.getElementById("logsSearch").value;
+    loadLogs(search);
+}
+
+// دالة لإعادة تعيين التصفية
+function resetLogsFilter() {
+    document.getElementById("logsSearch").value = "";
+    loadLogs();
+}
+function getActionUser() {
+  // 1) من localStorage (اللي خزنته بعد تسجيل الدخول)
+  const fromLS = localStorage.getItem('username');
+  if (fromLS) return fromLS;
+
+  // 2) من userSession لو موجود
+  try {
+    const sess = JSON.parse(
+      localStorage.getItem('userSession') ||
+      sessionStorage.getItem('userSession') || '{}'
+    );
+    if (sess && sess.username) return sess.username;
+  } catch (_) {}
+
+  // 3) من input مخفي لو موجود
+  const el = document.getElementById('current_user');
+  if (el && el.value) return el.value;
+
+  // 4) افتراضي
+  return 'System';
+}
+
+// (اختياري) عبّي الحقل المخفي تلقائياً إن موجود
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('current_user');
+  if (el) el.value = getActionUser();
+});
+// دالة تحميل العملاء للإشعارات
+function loadClientsForNotifications() {
+    fetch("/newstart/api/subscribers")
+        .then(response => response.json())
+        .then(clients => {
+            const clientsList = document.getElementById("clientsList");
+            clientsList.innerHTML = "";
+            
+            clients.forEach(client => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="client-checkbox" data-phone="${client.phone}" data-name="${client.name}">
+                    </td>
+                    <td>${client.name}</td>
+                    <td>${client.phone}</td>
+                `;
+                clientsList.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error("Error loading clients:", error);
+            showAlert("حدث خطأ أثناء تحميل قائمة العملاء", "error");
+        });
+}
+
+// دالة تحديد/إلغاء تحديد جميع العملاء
+function toggleSelectAll(checkbox) {
+    const clientCheckboxes = document.querySelectorAll('.client-checkbox');
+    clientCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+// دالة إرسال الإشعارات
+async function sendNotifications() {
+    const message = document.getElementById("notificationMessage").value.trim();
+    if (!message) {
+        showAlert("الرجاء كتابة نص الرسالة", "error");
+        return;
+    }
+    
+    const selectedClients = Array.from(document.querySelectorAll('.client-checkbox:checked'));
+    if (selectedClients.length === 0) {
+        showAlert("الرجاء اختيار عميل واحد على الأقل", "error");
+        return;
+    }
+    
+    const btn = document.getElementById("sendNotificationBtn");
+    const originalText = btn.innerHTML;
+    const statusEl = document.getElementById("notificationStatus");
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.disabled = true;
+    statusEl.textContent = `0/${selectedClients.length} تم إرسالها`;
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    // إرسال الرسائل مع وجود فاصل زمني 5 ثواني بين كل رسالة
+    for (let i = 0; i < selectedClients.length; i++) {
+        const client = selectedClients[i];
+        const phone = client.getAttribute('data-phone');
+        const name = client.getAttribute('data-name');
+        
+        try {
+            // إضافة اسم العميل للرسالة بشكل تلقائي
+            const personalizedMessage = `عزيزي ${name},\n${message}`;
+            
+            const response = await fetch("/newstart/api/send-message", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    number: phone,
+                    message: personalizedMessage
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                successCount++;
+            } else {
+                failCount++;
+                console.error(`Failed to send to ${phone}:`, result.error);
+            }
+        } catch (error) {
+            failCount++;
+            console.error(`Error sending to ${phone}:`, error);
+        }
+        
+        statusEl.textContent = `${i + 1}/${selectedClients.length} تم إرسالها (${successCount} نجاح, ${failCount} فشل)`;
+        
+        // الانتظار 5 ثواني قبل الإرسال التالي (ما عدا للعنصر الأخير)
+        if (i < selectedClients.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    
+    showAlert(`تم إرسال الإشعارات: ${successCount} نجاح, ${failCount} فشل`, 
+              failCount === 0 ? "success" : "warning");
+}
+// إضافة مستمع الحدث لاختيار الملف
 document.getElementById('restoreFileSelect').addEventListener('change', updateRestorePreview);
 
 
@@ -3193,6 +3643,10 @@ window.confirmRestore = confirmRestore;
             window.filterPackages = filterPackages;
             window.resetPackageFilter = resetPackageFilter;
             window.loadSubscriptionRequests = loadSubscriptionRequests;
+            window.showLogsSection = showLogsSection;
+window.filterLogs = filterLogs;
+window.resetLogsFilter = resetLogsFilter;
+window.loadLogs = loadLogs;
         </script>
     </body>
 </html>
