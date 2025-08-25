@@ -8,7 +8,7 @@ const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
 const dbDir = "/usr/src/app/newstartDB/database.db";
-const backupDir = path.join(dbDir, 'backups');
+const backupDir = path.join(dbDir);
 
 // إنشاء المجلدات لو مش موجودة
 if (!fs.existsSync(dbDir)) {
