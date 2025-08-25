@@ -7,28 +7,8 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
-const dbDir = "/usr/src/app/newstartDB/database.db";
-const backupDir = path.join(dbDir);
-
-// إنشاء المجلدات لو مش موجودة
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
-if (!fs.existsSync(backupDir)) {
-    fs.mkdirSync(backupDir, { recursive: true });
-}
-
-// المسار الأساسي لقاعدة البيانات
-let currentDbPath = path.join(dbDir, 'database.db');
-
-// فتح اتصال قاعدة البيانات
-let db = new sqlite3.Database(currentDbPath, (err) => {
-    if (err) {
-        console.error('خطأ في فتح قاعدة البيانات:', err.message);
-    } else {
-        console.log('تم الاتصال بقاعدة البيانات.');
-    }
-});
+let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
+// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -54,9 +34,6 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
 // تعيين محرك العرض
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "html");
