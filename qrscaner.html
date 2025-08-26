@@ -13,15 +13,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-       body {
-    background: linear-gradient(135deg, #0f4d4d, #146666);
-    color: #333;
-    min-height: 100vh;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        body {
+            background: linear-gradient(135deg, #0f4d4d, #146666);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         
         .container {
             width: 100%;
@@ -137,14 +137,14 @@
         }
         
         .customer-info {
-    background: #f9f9f9;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px 0;
-    display: none;
-    direction: rtl;  
-    text-align: right; 
-}
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+            direction: rtl;  
+            text-align: right; 
+        }
         
         .info-header {
             text-align: center;
@@ -156,13 +156,13 @@
         }
         
         .info-row {
-    display: flex;
-    justify-content: flex-start; 
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-    gap: 10px; 
-}
+            display: flex;
+            justify-content: flex-start; 
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            gap: 10px; 
+        }
         
         .info-label {
             font-weight: bold;
@@ -254,12 +254,12 @@
                 </div>
                 <video id="video"></video>
                  <div style="margin: 15px 0; text-align:center;">
-        <input type="text" id="subscriber-search" placeholder="أدخل رقم المشترك" 
-               style="padding:10px; border:1px solid #ccc; border-radius:8px; width:70%; text-align:center;">
-        <button class="btn" id="search-btn">
-            <i class="fas fa-search"></i> بحث
-        </button>
-    </div>
+                    <input type="text" id="subscriber-search" placeholder="أدخل رقم المشترك" 
+                           style="padding:10px; border:1px solid #ccc; border-radius:8px; width:70%; text-align:center;">
+                    <button class="btn" id="search-btn">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
                 <button class="btn btn-scan" id="start-scan">
                     <i class="fas fa-camera"></i> بدء المسح
                 </button>
@@ -321,6 +321,8 @@
             const deductMealBtn = document.getElementById('deduct-meal');
             const loading = document.getElementById('loading');
             const message = document.getElementById('message');
+            const searchBtn = document.getElementById('search-btn');
+            const searchInput = document.getElementById('subscriber-search');
             
             // عناصر بيانات العميل
             const subscriberIdElement = document.getElementById('subscriber-id');
@@ -340,6 +342,14 @@
             
             // زر خصم الوجبة
             deductMealBtn.addEventListener('click', deductMeal);
+            
+            // زر البحث
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
             
             // دالة بدء المسح
             async function startScan() {
@@ -379,6 +389,32 @@
                 }
             }
             
+            // دالة استخراج الرقم من بيانات QR code
+            function extractSubscriberId(qrData) {
+                // إذا كان النص يحتوي على "ID:" فإننا نستخرج الرقم
+                if (qrData.includes("ID:")) {
+                    // استخدام regex لاستخراج الرقم بعد ID:
+                    const match = qrData.match(/ID:(\d+)/);
+                    if (match && match[1]) {
+                        return match[1];
+                    }
+                    
+                    // محاولة أخرى في حالة وجود مسافات أو تنسيق مختلف
+                    const parts = qrData.split(',');
+                    for (let part of parts) {
+                        if (part.includes("ID:")) {
+                            const idPart = part.split(':');
+                            if (idPart.length > 1) {
+                                return idPart[1].trim();
+                            }
+                        }
+                    }
+                }
+                
+                // إذا لم نجد تنسيق ID: نعيد النص كاملاً (قد يكون الرقم فقط)
+                return qrData;
+            }
+            
             // دالة المسح المستمرة
             function tick() {
                 if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
@@ -394,7 +430,8 @@
                     });
                     
                     if (code) {
-                        const subscriberId = code.data;
+                        const qrData = code.data;
+                        const subscriberId = extractSubscriberId(qrData);
                         stopScan();
                         fetchSubscriberData(subscriberId);
                     }
@@ -402,6 +439,16 @@
                 
                 if (scanning) {
                     requestAnimationFrame(tick);
+                }
+            }
+            
+            // دالة البحث عن المشترك
+            function handleSearch() {
+                const subscriberId = searchInput.value.trim();
+                if (subscriberId) {
+                    fetchSubscriberData(subscriberId);
+                } else {
+                    showMessage('الرجاء إدخال رقم المشترك', 'error');
                 }
             }
             
@@ -413,13 +460,14 @@
                 // محاكاة API call - في التطبيق الحقيقي سيتم استدعاء API الفعلي
                 setTimeout(() => {
                     // بيانات افتراضية للعرض - في التطبيق الحقيقي سيتم استبدالها بالبيانات الفعلية من API
+                   
                     
                     displayCustomerData(mockData);
                     showLoading(false);
                 }, 1500);
                 
-               
-                // كود API الحقيقي:
+                // كود API الحقيقي (معلق حالياً):
+              
                 fetch(`/newstart/api/subscribers/${subscriberId}`)
                     .then(response => {
                         if (!response.ok) {
@@ -435,21 +483,21 @@
                         showMessage(error.message, 'error');
                         showLoading(false);
                     });
-                
+               
             }
             
             // عرض بيانات العميل
-          function displayCustomerData(data) {
-    subscriberIdElement.textContent = data.subscriber_id;
-    subscriberNameElement.textContent = data.name || data.subscriber_name;
-    subscriptionTypeElement.textContent = data.subscription_type;
-    statusElement.textContent = data.status;
-    mealsRemainingElement.textContent = data.meals_remaining + " وجبات متبقية";
+            function displayCustomerData(data) {
+                subscriberIdElement.textContent = data.subscriber_id;
+                subscriberNameElement.textContent = data.name || data.subscriber_name;
+                subscriptionTypeElement.textContent = data.subscription_type;
+                statusElement.textContent = data.status;
+                mealsRemainingElement.textContent = data.meals_remaining + " وجبات متبقية";
 
-    customerInfo.style.display = 'block';
-    deductMealBtn.disabled = false;
-}
-            
+                customerInfo.style.display = 'block';
+                deductMealBtn.disabled = false;
+            }
+
             // خصم وجبة
             function deductMeal() {
                 if (!currentSubscriberId) return;
@@ -459,68 +507,49 @@
                     
                     // محاكاة API call - في التطبيق الحقيقي سيتم استدعاء API الفعلي
                     setTimeout(() => {
-                        // في التطبيق الحقيقي، سيتم إرسال اسم المستخدم الفعلي
-                        const username = "المشرف";
-                        
-                       
-                        // كود API الحقيقي:
-                        fetch(`/newstart/api/subscribers/${currentSubscriberId}/deduct-meal`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                actionUser: username,
-                                subscriber_name: subscriberNameElement.textContent,
-                                subscription_type: subscriptionTypeElement.textContent
-                            })
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.json().then(err => { throw new Error(err.error); });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            showLoading(false);
-                            if (data.success) {
-                                showMessage('تم خصم الوجبة بنجاح', 'success');
-                                mealsRemainingElement.textContent = data.meals_remaining;
-                            } else {
-                                throw new Error('فشل في خصم الوجبة');
-                            }
-                        })
-                        .catch(error => {
-                            showLoading(false);
-                            showMessage(error.message, 'error');
-                        });
-                     
-                        
                         // محاكاة الاستجابة الناجحة
                         showLoading(false);
                         showMessage('تم خصم الوجبة بنجاح', 'success');
-                        mealsRemainingElement.textContent = parseInt(mealsRemainingElement.textContent) - 1;
+                        const currentMeals = parseInt(mealsRemainingElement.textContent);
+                        mealsRemainingElement.textContent = (currentMeals - 1) + " وجبات متبقية";
                     }, 1500);
+                    
+                    // كود API الحقيقي (معلق حالياً):
+                 
+                    fetch(`/newstart/api/subscribers/${currentSubscriberId}/deduct-meal`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            actionUser: username,
+                            subscriber_name: subscriberNameElement.textContent,
+                            subscription_type: subscriptionTypeElement.textContent
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error); });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showLoading(false);
+                        if (data.success) {
+                            showMessage('تم خصم الوجبة بنجاح', 'success');
+                            mealsRemainingElement.textContent = data.meals_remaining;
+                        } else {
+                            throw new Error('فشل في خصم الوجبة');
+                        }
+                    })
+                    .catch(error => {
+                        showLoading(false);
+                        showMessage(error.message, 'error');
+                    });
+                   
                 }
             }
-            const searchBtn = document.getElementById('search-btn');
-const searchInput = document.getElementById('subscriber-search');
-
-searchBtn.addEventListener('click', () => {
-    const subscriberId = searchInput.value.trim();
-    if(subscriberId){
-        fetchSubscriberData(subscriberId);
-    } else {
-        showMessage('الرجاء إدخال رقم المشترك', 'error');
-    }
-});
-
-// البحث بالضغط على Enter
-searchInput.addEventListener('keypress', (e) => {
-    if(e.key === 'Enter'){
-        searchBtn.click();
-    }
-});
+            
             // وظائف مساعدة
             function showLoading(show) {
                 loading.style.display = show ? 'block' : 'none';
