@@ -124,6 +124,9 @@ app.get("/newstart/qrcode", (req, res) => {
 app.get("/newstart/index", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
+app.get("/newstart/qrscaner", (req, res) => {
+    res.sendFile(path.join(__dirname, "qrscaner.html"));
+});
 // API Routes
 // المشتركين
 app.get("/newstart/api/subscribers", (req, res) => {
