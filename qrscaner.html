@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Start - نظام إدارة الوجبات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+       body {
+    background: linear-gradient(135deg, #0f4d4d, #146666);
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #0f4d4d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .scanner-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .scanner-placeholder {
+            width: 100%;
+            height: 200px;
+            background: #f9f9f9;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+        
+        .scanner-placeholder i {
+            font-size: 50px;
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+        
+        .scanner-placeholder p {
+            color: #777;
+        }
+        
+        #video {
+            width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .btn i {
+            margin-left: 8px;
+        }
+        
+        .btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-scan {
+            background: #2ecc71;
+        }
+        
+        .btn-scan:hover {
+            background: #27ae60;
+        }
+        
+        .btn-deduct {
+            background: #e67e22;
+        }
+        
+        .btn-deduct:hover {
+            background: #d35400;
+        }
+        
+        .customer-info {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    display: none;
+    direction: rtl;  
+    text-align: right; 
+}
+        
+        .info-header {
+            text-align: center;
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .info-row {
+    display: flex;
+    justify-content: flex-start; 
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    gap: 10px; 
+}
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .info-value {
+            color: #333;
+        }
+        
+        .meals-remaining {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading i {
+            font-size: 40px;
+            color: #e74c3c;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">New Start Restaurant</div>
+            <div class="subtitle">نظام إدارة وجبات العملاء</div>
+        </div>
+        
+        <div class="content">
+            <div class="scanner-section">
+                <h2>مسح بطاقة العميل</h2>
+                <div class="scanner-placeholder" id="scanner-placeholder">
+                    <i class="fas fa-qrcode"></i>
+                    <p>انقر لبدء المسح</p>
+                </div>
+                <video id="video"></video>
+                 <div style="margin: 15px 0; text-align:center;">
+        <input type="text" id="subscriber-search" placeholder="أدخل رقم المشترك" 
+               style="padding:10px; border:1px solid #ccc; border-radius:8px; width:70%; text-align:center;">
+        <button class="btn" id="search-btn">
+            <i class="fas fa-search"></i> بحث
+        </button>
+    </div>
+                <button class="btn btn-scan" id="start-scan">
+                    <i class="fas fa-camera"></i> بدء المسح
+                </button>
+                <button class="btn" id="stop-scan" style="display: none;">
+                    <i class="fas fa-stop"></i> إيقاف المسح
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>جاري تحميل البيانات...</p>
+            </div>
+            
+            <div class="message" id="message"></div>
+            
+            <div class="customer-info" id="customer-info">
+                <div class="info-header">معلومات العميل</div>
+                
+                <div class="info-row">
+                    <span class="info-label">رقم المشترك:</span>
+                    <span class="info-value" id="subscriber-id"></span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">اسم المشترك:</span>
+                    <span class="info-value" id="subscriber-name"></span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">نوع الاشتراك:</span>
+                    <span class="info-value" id="subscription-type"></span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">الحالة:</span>
+                    <span class="info-value" id="status"></span>
+                </div>
+                
+                <div class="meals-remaining" id="meals-remaining"></div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-deduct" id="deduct-meal" disabled>
+                    <i class="fas fa-ticket-alt"></i> خصم وجبة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // العناصر الرئيسية
+            const video = document.getElementById('video');
+            const scannerPlaceholder = document.getElementById('scanner-placeholder');
+            const startScanBtn = document.getElementById('start-scan');
+            const stopScanBtn = document.getElementById('stop-scan');
+            const customerInfo = document.getElementById('customer-info');
+            const deductMealBtn = document.getElementById('deduct-meal');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            // عناصر بيانات العميل
+            const subscriberIdElement = document.getElementById('subscriber-id');
+            const subscriberNameElement = document.getElementById('subscriber-name');
+            const subscriptionTypeElement = document.getElementById('subscription-type');
+            const statusElement = document.getElementById('status');
+            const mealsRemainingElement = document.getElementById('meals-remaining');
+            
+            let scanning = false;
+            let currentSubscriberId = null;
+            let stream = null;
+            
+            // بدء المسح
+            startScanBtn.addEventListener('click', startScan);
+            stopScanBtn.addEventListener('click', stopScan);
+            scannerPlaceholder.addEventListener('click', startScan);
+            
+            // زر خصم الوجبة
+            deductMealBtn.addEventListener('click', deductMeal);
+            
+            // دالة بدء المسح
+            async function startScan() {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" } 
+                    });
+                    
+                    video.srcObject = stream;
+                    video.setAttribute('playsinline', true);
+                    video.play();
+                    
+                    video.style.display = 'block';
+                    scannerPlaceholder.style.display = 'none';
+                    startScanBtn.style.display = 'none';
+                    stopScanBtn.style.display = 'inline-block';
+                    
+                    scanning = true;
+                    requestAnimationFrame(tick);
+                    
+                } catch (err) {
+                    showMessage('خطأ في الوصول إلى الكاميرا: ' + err.message, 'error');
+                }
+            }
+            
+            // دالة إيقاف المسح
+            function stopScan() {
+                scanning = false;
+                video.style.display = 'none';
+                scannerPlaceholder.style.display = 'flex';
+                startScanBtn.style.display = 'inline-block';
+                stopScanBtn.style.display = 'none';
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+            }
+            
+            // دالة المسح المستمرة
+            function tick() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert',
+                    });
+                    
+                    if (code) {
+                        const subscriberId = code.data;
+                        stopScan();
+                        fetchSubscriberData(subscriberId);
+                    }
+                }
+                
+                if (scanning) {
+                    requestAnimationFrame(tick);
+                }
+            }
+            
+            // جلب بيانات المشترك
+            function fetchSubscriberData(subscriberId) {
+                showLoading(true);
+                currentSubscriberId = subscriberId;
+                
+                // محاكاة API call - في التطبيق الحقيقي سيتم استدعاء API الفعلي
+                setTimeout(() => {
+                    // بيانات افتراضية للعرض - في التطبيق الحقيقي سيتم استبدالها بالبيانات الفعلية من API
+                    
+                    displayCustomerData(mockData);
+                    showLoading(false);
+                }, 1500);
+                
+               
+                // كود API الحقيقي:
+                fetch(`/newstart/api/subscribers/${subscriberId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('المشترك غير موجود');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayCustomerData(data);
+                        showLoading(false);
+                    })
+                    .catch(error => {
+                        showMessage(error.message, 'error');
+                        showLoading(false);
+                    });
+                
+            }
+            
+            // عرض بيانات العميل
+          function displayCustomerData(data) {
+    subscriberIdElement.textContent = data.subscriber_id;
+    subscriberNameElement.textContent = data.name || data.subscriber_name;
+    subscriptionTypeElement.textContent = data.subscription_type;
+    statusElement.textContent = data.status;
+    mealsRemainingElement.textContent = data.meals_remaining + " وجبات متبقية";
+
+    customerInfo.style.display = 'block';
+    deductMealBtn.disabled = false;
+}
+            
+            // خصم وجبة
+            function deductMeal() {
+                if (!currentSubscriberId) return;
+                
+                if (confirm('هل أنت متأكد من رغبتك في خصم وجبة من رصيد هذا العميل؟')) {
+                    showLoading(true);
+                    
+                    // محاكاة API call - في التطبيق الحقيقي سيتم استدعاء API الفعلي
+                    setTimeout(() => {
+                        // في التطبيق الحقيقي، سيتم إرسال اسم المستخدم الفعلي
+                        const username = "المشرف";
+                        
+                       
+                        // كود API الحقيقي:
+                        fetch(`/newstart/api/subscribers/${currentSubscriberId}/deduct-meal`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                actionUser: username,
+                                subscriber_name: subscriberNameElement.textContent,
+                                subscription_type: subscriptionTypeElement.textContent
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => { throw new Error(err.error); });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            showLoading(false);
+                            if (data.success) {
+                                showMessage('تم خصم الوجبة بنجاح', 'success');
+                                mealsRemainingElement.textContent = data.meals_remaining;
+                            } else {
+                                throw new Error('فشل في خصم الوجبة');
+                            }
+                        })
+                        .catch(error => {
+                            showLoading(false);
+                            showMessage(error.message, 'error');
+                        });
+                     
+                        
+                        // محاكاة الاستجابة الناجحة
+                        showLoading(false);
+                        showMessage('تم خصم الوجبة بنجاح', 'success');
+                        mealsRemainingElement.textContent = parseInt(mealsRemainingElement.textContent) - 1;
+                    }, 1500);
+                }
+            }
+            const searchBtn = document.getElementById('search-btn');
+const searchInput = document.getElementById('subscriber-search');
+
+searchBtn.addEventListener('click', () => {
+    const subscriberId = searchInput.value.trim();
+    if(subscriberId){
+        fetchSubscriberData(subscriberId);
+    } else {
+        showMessage('الرجاء إدخال رقم المشترك', 'error');
+    }
+});
+
+// البحث بالضغط على Enter
+searchInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter'){
+        searchBtn.click();
+    }
+});
+            // وظائف مساعدة
+            function showLoading(show) {
+                loading.style.display = show ? 'block' : 'none';
+            }
+            
+            function showMessage(text, type) {
+                message.textContent = text;
+                message.className = 'message ' + type;
+                message.style.display = 'block';
+                
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
