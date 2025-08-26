@@ -2647,11 +2647,11 @@ function deductMeal(subscriberId, subscriberName, subscriptionType) {
                 // مسح أي QR كود سابق
                 qrcodeDiv.innerHTML = "";
                 document.getElementById("qr-name").textContent = name;
-                document.getElementById("qr-id").textContent = `ID: ${id}`;
+                document.getElementById("qr-id").textContent = `${id}`;
 
                 // إنشاء QR كود جديد
                 new QRCode(qrcodeDiv, {
-                    text: `ID:${id},Name:${name}`,
+                    text: `${id}`,
                     width: 200,
                     height: 200,
                     colorDark: "#000000",
