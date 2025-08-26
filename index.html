@@ -828,6 +828,9 @@
                  <li id="settingsTab">
     <i class="fas fa-cog"></i> الإعدادات
 </li>
+                    <li id="qrScannerTab">
+    <i class="fas fa-qrcode"></i> مسح QR Code
+</li>
                 </ul>
             </div>
 
@@ -1695,7 +1698,9 @@
                     .addEventListener("click", () =>
                         closeModal("packageModal"),
                     );
-
+                 document.getElementById("qrScannerTab").addEventListener("click", function() {
+        window.location.href = "/qrscaner";
+    });
                 // تقديم النماذج
                 document
                     .getElementById("subscriberForm")
