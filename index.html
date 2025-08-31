@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>نظام إدارة الاشتراكات V 1.0.6</title>
+        <title>نظام إدارة الاشتراكات الغذائية</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
             rel="stylesheet"
@@ -1120,14 +1120,39 @@
             <i class="fas fa-sync-alt"></i> تحديث
         </button>
     </div>
-    <div class="search-filter" style="margin-bottom: 15px">
+    <div class="search-filter" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <!-- البحث النصي -->
         <input
             type="text"
             id="logsSearch"
             class="form-control"
             placeholder="ابحث في السجلات..."
-            style="width: 300px; display: inline-block"
+            style="width: 250px;"
+            onkeypress="if(event.key === 'Enter') filterLogs()"
         />
+        
+        <!-- البحث بالتاريخ -->
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <label for="dateFrom">من:</label>
+            <input
+                type="date"
+                id="dateFrom"
+                class="form-control"
+                style="width: 150px;"
+            />
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <label for="dateTo">إلى:</label>
+            <input
+                type="date"
+                id="dateTo"
+                class="form-control"
+                style="width: 150px;"
+            />
+        </div>
+        
+        <!-- أزرار البحث -->
         <button class="btn btn-primary" onclick="filterLogs()">
             <i class="fas fa-search"></i> بحث
         </button>
@@ -3534,12 +3559,18 @@ function closeModal(modalId) {
         document.getElementById('confirmRestoreBtn').disabled = true;
     }
 }
-async function loadLogs(search = "") {
+async function loadLogs(searchText = "", dateFrom = "", dateTo = "") {
     const tbody = document.getElementById("logsTableBody");
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">جاري التحميل...</td></tr>`;
 
-    let url = "/api/logs";
-    if (search) url = `/api/logs/search?q=${encodeURIComponent(search)}`;
+    // بناء معاملات البحث
+    const params = new URLSearchParams();
+    if (searchText) params.append('search', searchText);
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    
+    const queryString = params.toString();
+    const url = queryString ? `/api/logs?${queryString}` : '/api/logs';
 
     try {
         const res = await fetch(url);
@@ -3548,7 +3579,7 @@ async function loadLogs(search = "") {
         tbody.innerHTML = "";
 
         if (logs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">لا توجد سجلات</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">لا توجد سجلات تطابق معايير البحث</td></tr>`;
             return;
         }
 
@@ -3576,27 +3607,23 @@ function showLogsSection() {
 
 // دالة لتصفية السجلات
 function filterLogs() {
-    const search = document.getElementById("logsSearch").value;
-    loadLogs(search);
+    const searchText = document.getElementById("logsSearch").value;
+    const dateFrom = document.getElementById("dateFrom").value;
+    const dateTo = document.getElementById("dateTo").value;
+    
+    // إرسال معايير البحث للخادم
+    loadLogs(searchText, dateFrom, dateTo);
 }
 
-// دالة لإعادة تعيين تصفية السجلات
+// دالة إعادة تعيين الفلتر
 function resetLogsFilter() {
     document.getElementById("logsSearch").value = "";
-    loadLogs();
+    document.getElementById("dateFrom").value = "";
+    document.getElementById("dateTo").value = "";
+    loadLogs(); // تحميل جميع السجلات بدون تصفية
 }
-
-// دالة لتصفية السجلات
-function filterLogs() {
-    const search = document.getElementById("logsSearch").value;
-    loadLogs(search);
-}
-
 // دالة لإعادة تعيين التصفية
-function resetLogsFilter() {
-    document.getElementById("logsSearch").value = "";
-    loadLogs();
-}
+
 function getActionUser() {
   // 1) من localStorage (اللي خزنته بعد تسجيل الدخول)
   const fromLS = localStorage.getItem('username');
