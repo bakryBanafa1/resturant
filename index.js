@@ -89,7 +89,27 @@ db.serialize(() => {
       subscription_type TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'قيد الانتظار'
   )`);
+db.run(`ALTER TABLE subscribers ADD COLUMN created_at TEXT`, (err) => {
+    if (err) {
+        console.error("Error adding created_at column:", err);
+    } else {
+        console.log("Added created_at column successfully");
+        
+        // بعد إضافة العمود، يمكننا تحديث القيم الموجودة إذا لزم الأمر
+        db.run(`UPDATE subscribers SET created_at = datetime('now') WHERE created_at IS NULL`);
+    }
+});
 
+db.run(`ALTER TABLE subscribers ADD COLUMN created_by TEXT`, (err) => {
+    if (err) {
+        console.error("Error adding created_by column:", err);
+    } else {
+        console.log("Added created_by column successfully");
+        
+        // بعد إضافة العمود، يمكننا تحديث القيم الموجودة إذا لزم الأمر
+        db.run(`UPDATE subscribers SET created_by = 'System' WHERE created_by IS NULL`);
+    }
+});
     // جدول المستخدمين
     db.run(`CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -920,11 +940,48 @@ function addLog(username, action, details) {
     );
 }
 // جلب كل السجلات
-app.get("/api/logs", (req, res) => {
-    db.all(`SELECT * FROM logs ORDER BY log_id DESC`, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: "Database error" });
-        res.json(rows);
-    });
+app.get('/api/logs', async (req, res) => {
+    const { search, dateFrom, dateTo } = req.query;
+    
+    let query = 'SELECT * FROM logs';
+    let conditions = [];
+    let params = [];
+    
+    if (search) {
+        conditions.push(`(username LIKE ? OR action LIKE ? OR details LIKE ?)`);
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    
+    if (dateFrom) {
+        conditions.push(`DATE(timestamp) >= ?`);
+        params.push(dateFrom);
+    }
+    
+    if (dateTo) {
+        conditions.push(`DATE(timestamp) <= ?`);
+        params.push(dateTo);
+    }
+    
+    if (conditions.length) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY timestamp DESC';
+    
+    try {
+        // استخدام db.all() لـ SQLite
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('Error fetching logs:', err);
+                res.status(500).json({ error: 'Internal server error' });
+            } else {
+                res.json(rows);
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // جلب السجلات مع بحث
