@@ -89,27 +89,7 @@ db.serialize(() => {
       subscription_type TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'قيد الانتظار'
   )`);
-db.run(`ALTER TABLE subscribers ADD COLUMN created_at TEXT`, (err) => {
-    if (err) {
-        console.error("Error adding created_at column:", err);
-    } else {
-        console.log("Added created_at column successfully");
-        
-        // بعد إضافة العمود، يمكننا تحديث القيم الموجودة إذا لزم الأمر
-        db.run(`UPDATE subscribers SET created_at = datetime('now') WHERE created_at IS NULL`);
-    }
-});
 
-db.run(`ALTER TABLE subscribers ADD COLUMN created_by TEXT`, (err) => {
-    if (err) {
-        console.error("Error adding created_by column:", err);
-    } else {
-        console.log("Added created_by column successfully");
-        
-        // بعد إضافة العمود، يمكننا تحديث القيم الموجودة إذا لزم الأمر
-        db.run(`UPDATE subscribers SET created_by = 'System' WHERE created_by IS NULL`);
-    }
-});
     // جدول المستخدمين
     db.run(`CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
