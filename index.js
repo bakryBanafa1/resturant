@@ -155,12 +155,16 @@ app.post("/newstart/api/subscribers", (req, res) => {
         subscription_type,
         meals_remaining,
         status,
-       actionUser, // ممكن تجيب من الجلسة
+        actionUser
     } = req.body;
 
+    const created_at = new Date().toISOString(); // تاريخ الإضافة الحالي
+
     db.run(
-        `INSERT INTO subscribers (name, phone, start_date, end_date, subscription_type, meals_remaining, status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO subscribers 
+        (name, phone, start_date, end_date, subscription_type, 
+         meals_remaining, status, created_at, created_by) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             name,
             phone,
@@ -169,6 +173,8 @@ app.post("/newstart/api/subscribers", (req, res) => {
             subscription_type,
             meals_remaining || 0,
             status,
+            created_at,
+            actionUser || 'System'
         ],
         function (err) {
             if (err) {
@@ -183,7 +189,7 @@ app.post("/newstart/api/subscribers", (req, res) => {
                 success: true,
                 subscriber_id: this.lastID,
             });
-        },
+        }
     );
 });
 
