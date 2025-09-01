@@ -346,41 +346,92 @@ app.put("/newstart/api/subscribers/:id", (req, res) => {
         actionUser
     } = req.body;
 
-    db.run(
-        `UPDATE subscribers SET 
-         name = ?, 
-         phone = ?, 
-         start_date = ?, 
-         end_date = ?, 
-         subscription_type = ?, 
-         meals_remaining = ?, 
-         status = ? 
-         WHERE subscriber_id = ?`,
-        [
-            name,
-            phone,
-            start_date,
-            end_date,
-            subscription_type,
-            meals_remaining,
-            status,
-            req.params.id,
-        ],
-        function (err) {
+    // أولاً: جلب البيانات القديمة قبل التعديل
+    db.get(
+        "SELECT * FROM subscribers WHERE subscriber_id = ?",
+        [req.params.id],
+        (err, oldData) => {
             if (err) {
-                console.error("Error updating subscriber:", err);
+                console.error("Error fetching old subscriber data:", err);
                 return res.status(500).json({ error: err.message });
             }
 
-            if (this.changes > 0) {
-                addLog(actionUser, "تعديل مشترك", `تم تعديل بيانات المشترك ${name} (${phone})`);
+            if (!oldData) {
+                return res.status(404).json({ error: "المشترك غير موجود" });
             }
 
-            res.json({
-                success: true,
-                changes: this.changes,
-            });
-        },
+            // ثانياً: تحديث البيانات
+            db.run(
+                `UPDATE subscribers SET 
+                 name = ?, 
+                 phone = ?, 
+                 start_date = ?, 
+                 end_date = ?, 
+                 subscription_type = ?, 
+                 meals_remaining = ?, 
+                 status = ? 
+                 WHERE subscriber_id = ?`,
+                [
+                    name,
+                    phone,
+                    start_date,
+                    end_date,
+                    subscription_type,
+                    meals_remaining,
+                    status,
+                    req.params.id,
+                ],
+                function (err) {
+                    if (err) {
+                        console.error("Error updating subscriber:", err);
+                        return res.status(500).json({ error: err.message });
+                    }
+
+                   if (this.changes > 0) {
+    // ثالثاً: مقارنة البيانات القديمة بالجديدة وبناء تفاصيل التعديل
+    const changes = [];
+
+    if (oldData.name !== name) {
+        changes.push(`تم تغيير الاسم من "${oldData.name}" إلى "${name}"`);
+    }
+    if (oldData.phone !== phone) {
+        changes.push(`تم تغيير رقم الجوال من "${oldData.phone}" إلى "${phone}"`);
+    }
+    if (oldData.start_date !== start_date) {
+        changes.push(`تم تغيير تاريخ البدء من "${oldData.start_date}" إلى "${start_date}"`);
+    }
+    if (oldData.end_date !== end_date) {
+        changes.push(`تم تغيير تاريخ الانتهاء من "${oldData.end_date}" إلى "${end_date}"`);
+    }
+    if (oldData.subscription_type !== subscription_type) {
+        changes.push(`تم تغيير نوع الاشتراك من "${oldData.subscription_type}" إلى "${subscription_type}"`);
+    }
+    if (oldData.meals_remaining !== meals_remaining) {
+        changes.push(`تم تغيير الوجبات المتبقية من "${oldData.meals_remaining}" إلى "${meals_remaining}"`);
+    }
+    if (oldData.status !== status) {
+        changes.push(`تم تغيير الحالة من "${oldData.status}" إلى "${status}"`);
+    }
+
+    // بناء رسالة التفاصيل
+    let details = `تم تعديل بيانات المشترك ${oldData.name} (${oldData.phone}).`;
+    if (changes.length > 0) {
+        details += `\nالتغييرات:\n- ${changes.join('\n- ')}`;
+    } else {
+        details += `\n(لم يتم إجراء أي تغييرات فعلية)`;
+    }
+
+    // تسجيل التفاصيل في السجل
+    addLog(actionUser, "تعديل مشترك", details);
+}
+
+                    res.json({
+                        success: true,
+                        changes: this.changes,
+                    });
+                }
+            );
+        }
     );
 });
 
