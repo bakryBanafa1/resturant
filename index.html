@@ -2425,7 +2425,7 @@ window.resetUserFilter = resetUserFilter;
                 document.getElementById(modalId).style.display = "none";
             }
 window.isSubmittingSubscriber = false;
-   async function handleSubscriberSubmit(e) {
+ async function handleSubscriberSubmit(e) {
     e.preventDefault();
       if (window.isSubmittingSubscriber) {
         console.warn("تم منع إرسال مزدوج — العملية جارية بالفعل");
@@ -2490,7 +2490,8 @@ const currentUser = localStorage.getItem("username");
             subscription_type: subscriptionType.value,
             meals_remaining: meals,
             status: status,
-             actionUser: currentUser
+             actionUser: currentUser,
+             subscriberId:subscriberId
         };
         
         const method = isEditMode ? "PUT" : "POST";
@@ -2503,7 +2504,7 @@ const currentUser = localStorage.getItem("username");
             },
             body: JSON.stringify(formData),
         });
-
+        const result = await saveResponse.json(); 
         if (!saveResponse.ok) {
             const errorData = await saveResponse.json();
             throw new Error(errorData.message || "فشل في حفظ المشترك");
@@ -2513,6 +2514,7 @@ const currentUser = localStorage.getItem("username");
         if (isEditMode) {
             showAlert("تم تحديث المشترك بنجاح", "success");
         } else {
+             const newSubscriberId = result.subscriber_id;
             showAlert("تم إضافة المشترك بنجاح", "success");
             
             // إرسال رسالة الواتساب
@@ -2523,8 +2525,8 @@ const currentUser = localStorage.getItem("username");
 📦 الباقة: ${formData.subscription_type}
 🍽️ عدد الوجبات: ${meals}
 📅 تاريخ البداية: ${startDate}
-📅 تاريخ الانتهاء: ${formData.end_date}`;
-
+📅 تاريخ الانتهاء: ${formData.end_date};
+رقم المشترك ${newSubscriberId}`
             try {
                 await fetch("/newstart/api/send-message", {
                     method: "POST",
@@ -2533,7 +2535,8 @@ const currentUser = localStorage.getItem("username");
                     },
                     body: JSON.stringify({
                         number: phone,
-                        message: message
+                        message: message,
+                        id:newSubscriberId
                     }),
                 });
                 console.log("تم إرسال الرسالة بنجاح");
