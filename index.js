@@ -35,6 +35,9 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
+const uploadsDir = path.join( "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
 // تعيين محرك العرض
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "html");
