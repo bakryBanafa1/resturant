@@ -7,6 +7,7 @@ const fs = require('fs');
 const cron = require('node-cron');
 const moment = require('moment');
 const sqlite3 = require("sqlite3").verbose();
+const QRCode = require('qrcode');
 let db = new sqlite3.Database("/usr/src/app/newstartDB/database.db");
 let backupDir="/usr/src/app/newstartDB/";
 // Middleware
