@@ -834,18 +834,92 @@ app.get('/newstart/api/users/:id', (req, res) => {
     });
 });
 app.post("/newstart/api/send-message", async (req, res) => {
-  const { number, message } = req.body;
-console.log(number +message)
-    try {
-        const response = await fetch(`https://resturantgateway-production.up.railway.app/send-message?number=${number}&message=${encodeURIComponent(message)}`);
-        if (!response.ok) {
-            throw new Error("فشل في إرسال الرسالة");
-        }
-        res.json({ success: true, message: "تم إرسال رسالة واتساب بنجاح" });
-    } catch (err) {
-        console.error("خطأ أثناء إرسال الرسالة:", err);
-        res.status(500).json({ success: false, error: "فشل في إرسال الرسالة" });
+  const { number, message, id } = req.body;
+  let filePath;
+
+  try {
+    // التحقق من وجود البيانات المطلوبة
+    if (!number || !message || !id) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "بيانات غير مكتملة: رقم الهاتف، الرسالة، وبيانات المشترك مطلوبة" 
+      });
     }
+
+    // إنشاء QR Code من بيانات المشترك
+    const qrData = JSON.stringify(id);
+    const fileName = `qrcode_${number}_${Date.now()}.png`;
+    filePath = path.join(uploadsDir, fileName);
+
+    console.log(`محاولة إنشاء QR Code في: ${filePath}`);
+
+    // استخدام options لتحسين إنشاء QR Code
+    const qrOptions = {
+      errorCorrectionLevel: 'H',
+      type: 'png',
+      quality: 0.9,
+      margin: 1,
+      width: 300,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    };
+
+    // حفظ QR Code في مجلد uploads
+    try {
+      await QRCode.toFile(filePath, qrData, qrOptions);
+      console.log("تم إنشاء QR Code بنجاح");
+      
+      // التحقق من وجود الملف بعد إنشائه
+      if (fs.existsSync(filePath)) {
+        console.log("تم التحقق من وجود ملف QR Code بنجاح");
+        const stats = fs.statSync(filePath);
+        console.log(`حجم الملف: ${stats.size} bytes`);
+      } else {
+        throw new Error("لم يتم إنشاء ملف QR Code");
+      }
+    } catch (qrError) {
+      console.error("خطأ في إنشاء QR Code:", qrError);
+      throw new Error("فشل في إنشاء QR Code: " + qrError.message);
+    }
+
+    // إرسال الصورة مع النص عبر API الخاص بك
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${fileName}`;
+    console.log(`محاولة إرسال الصورة عبر الرابط: ${imageUrl}`);
+    
+    const response = await fetch(`https://resturantgateway-production.up.railway.app/send-image?number=${number}&image=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(message)}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("فشل في إرسال الرسالة إلى الخدمة الخارجية:", errorText);
+      throw new Error("فشل في إرسال الرسالة إلى الخدمة الخارجية: " + errorText);
+    }
+
+    res.json({ 
+      success: true, 
+      message: "تم إرسال رسالة واتساب بنجاح مع QR Code",
+      qrCodePath: `/uploads/${fileName}`
+    });
+
+  } catch (err) {
+    console.error("خطأ أثناء إرسال الرسالة:", err);
+    
+    // حذف الصورة إذا فشل الإرسال
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        console.log("تم حذف ملف QR Code بسبب فشل الإرسال");
+      } catch (unlinkError) {
+        console.error("خطأ أثناء حذف الملف:", unlinkError);
+      }
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: err.message || "فشل في إرسال الرسالة" 
+    });
+  }
 });
 function createBackup() {
     const backupName = `backup-${moment().format('YYYY-MM-DD_HH-mm-ss')}.db`;
