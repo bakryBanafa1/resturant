@@ -40,18 +40,19 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "html");
 db.serialize(() => {
     // جدول المشتركين
-    db.run(`CREATE TABLE IF NOT EXISTS subscribers (
-      subscriber_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      start_date TEXT NOT NULL,
-      end_date TEXT NOT NULL,
-      subscription_type TEXT NOT NULL,
-      meals_deducted INTEGER DEFAULT 0,
-      meals_remaining INTEGER NOT NULL,
-      status TEXT NOT NULL
-  )`);
-
+   db.run(`CREATE TABLE IF NOT EXISTS subscribers (
+    subscriber_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    subscription_type TEXT NOT NULL,
+    meals_deducted INTEGER DEFAULT 0,
+    meals_remaining INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    created_by TEXT DEFAULT 'System'
+)`);
     // جدول سجل الوجبات
     db.run(`CREATE TABLE IF NOT EXISTS meal_logs (
       log_id INTEGER PRIMARY KEY AUTOINCREMENT,
