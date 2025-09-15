@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>1.0.7نظام إدارة الاشتراكات الغذائية</title>
+        <title>1.0.8نظام إدارة الاشتراكات الغذائية</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
             rel="stylesheet"
@@ -13,6 +13,7 @@
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
         <style>
             /* أنماط CSS معدلة */
             :root {
@@ -1686,6 +1687,64 @@
                 </div>
             </div>
         </div>
+        <!-- مودال QR Scanner -->
+<div id="qrScannerModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">مسح QR Code</h3>
+            <button class="close-btn" onclick="closeQRScanner()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="scanner-section" style="text-align: center;">
+                <div class="scanner-placeholder" id="scanner-placeholder" style="width: 100%; height: 200px; background: #f9f9f9; border: 2px dashed #ddd; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 15px 0; cursor: pointer;">
+                    <i class="fas fa-qrcode" style="font-size: 50px; color: #2c786c; margin-bottom: 15px;"></i>
+                    <p>انقر لبدء المسح</p>
+                </div>
+                <video id="qr-video" style="width: 100%; border-radius: 10px; display: none;"></video>
+                
+                <div style="margin: 15px 0; text-align:center;">
+                    <input type="text" id="subscriber-search" placeholder="أدخل رقم المشترك" 
+                           style="padding:10px; border:1px solid #ccc; border-radius:8px; width:70%; text-align:center;">
+                    <button class="btn btn-primary" id="search-btn" style="margin-top: 10px;">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                </div>
+            </div>
+            
+            <div class="customer-info" id="scanner-customer-info" style="display: none; background: #f9f9f9; border-radius: 10px; padding: 15px; margin: 15px 0;">
+                <div class="info-header" style="text-align: center; color: #2c786c; margin-bottom: 15px; font-weight: bold;">معلومات المشترك</div>
+                
+                <div class="info-row" style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span class="info-label" style="font-weight: bold;">رقم المشترك:</span>
+                    <span class="info-value" id="scanner-subscriber-id"></span>
+                </div>
+                
+                <div class="info-row" style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span class="info-label" style="font-weight: bold;">اسم المشترك:</span>
+                    <span class="info-value" id="scanner-subscriber-name"></span>
+                </div>
+                
+                <div class="info-row" style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span class="info-label" style="font-weight: bold;">نوع الاشتراك:</span>
+                    <span class="info-value" id="scanner-subscription-type"></span>
+                </div>
+                
+                <div class="info-row" style="display: flex; justify-content: space-between; margin: 10px 0;">
+                    <span class="info-label" style="font-weight: bold;">الحالة:</span>
+                    <span class="info-value" id="scanner-status"></span>
+                </div>
+                
+                <div class="meals-remaining" id="scanner-meals-remaining" style="font-size: 24px; font-weight: bold; color: #2c786c; text-align: center; margin: 15px 0;"></div>
+            </div>
+            
+            <div class="action-buttons" style="display: flex; justify-content: center; margin-top: 20px;">
+                <button class="btn btn-primary" id="scanner-deduct-meal" style="display: none;">
+                    <i class="fas fa-ticket-alt"></i> خصم وجبة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         <script>
             const GOOGLE_SCRIPT_URL =
                 "https://script.google.com/macros/s/AKfycbzKILlKoHN7jHoboi2KCMOpchcnAl2CH00Nieb5XWx-LIyEDL4ERcm1p_M3EhHzWjGi2Q/exec";
@@ -1733,6 +1792,7 @@
 
                 // إعداد القائمة الجانبية للجوال
                 setupMobileMenu();
+                    initScanner();
             });
 
             // دالة جديدة لإعداد القائمة الجانبية للجوال
@@ -1837,9 +1897,9 @@
                     .addEventListener("click", () =>
                         closeModal("packageModal"),
                     );
-            document.getElementById("qrScannerTab").addEventListener("click", function() {
-        window.location.href = "/newstart/qrscaner";
-    });
+           document.getElementById("qrScannerTab").addEventListener("click", function() {
+    openQRScanner();
+});
                 // تقديم النماذج
                 document
                     .getElementById("subscriberForm")
@@ -3925,6 +3985,202 @@ async function sendNotifications() {
     
     showAlert(`تم إرسال الإشعارات: ${successCount} نجاح, ${failCount} فشل`, 
               failCount === 0 ? "success" : "warning");
+}
+// دالة فتح مودال QR Scanner
+function openQRScanner() {
+    document.getElementById('qrScannerModal').style.display = 'block';
+    resetScanner();
+}
+
+// دالة إغلاق مودال QR Scanner
+function closeQRScanner() {
+    document.getElementById('qrScannerModal').style.display = 'none';
+    stopScanner();
+}
+
+// تهيئة الماسح
+function initScanner() {
+    const scannerPlaceholder = document.getElementById('scanner-placeholder');
+    const video = document.getElementById('qr-video');
+    
+    scannerPlaceholder.addEventListener('click', startScanner);
+    document.getElementById('search-btn').addEventListener('click', handleSearch);
+    document.getElementById('scanner-deduct-meal').addEventListener('click', deductMealFromScanner);
+}
+
+// بدء المسح
+async function startScanner() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } 
+        });
+        
+        const video = document.getElementById('qr-video');
+        video.srcObject = stream;
+        video.setAttribute('playsinline', true);
+        video.style.display = 'block';
+        video.play();
+        
+        document.getElementById('scanner-placeholder').style.display = 'none';
+        
+        // بدء تحليل الإطارات
+        scanQRCode();
+        
+    } catch (err) {
+        showAlert('خطأ في الوصول إلى الكاميرا: ' + err.message, 'error');
+    }
+}
+
+// إيقاف المسح
+function stopScanner() {
+    const video = document.getElementById('qr-video');
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
+    
+    video.style.display = 'none';
+    document.getElementById('scanner-placeholder').style.display = 'flex';
+}
+
+// مسح QR code
+function scanQRCode() {
+    const video = document.getElementById('qr-video');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert',
+            });
+            
+            if (code) {
+                const subscriberId = extractSubscriberId(code.data);
+                stopScanner();
+                fetchSubscriberData(subscriberId);
+                return;
+            }
+        }
+        requestAnimationFrame(tick);
+    }
+    
+    tick();
+}
+
+// استخراج رقم المشترك من بيانات QR
+function extractSubscriberId(qrData) {
+    if (qrData.includes("ID:")) {
+        const match = qrData.match(/ID:(\d+)/);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+    return qrData;
+}
+
+// البحث عن المشترك
+function handleSearch() {
+    const subscriberId = document.getElementById('subscriber-search').value.trim();
+    if (subscriberId) {
+        fetchSubscriberData(subscriberId);
+    } else {
+        showAlert('الرجاء إدخال رقم المشترك', 'error');
+    }
+}
+
+// جلب بيانات المشترك
+function fetchSubscriberData(subscriberId) {
+    fetch(`/newstart/api/subscribers/${subscriberId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('المشترك غير موجود');
+            }
+            return response.json();
+        })
+        .then(data => {
+            displaySubscriberData(data);
+        })
+        .catch(error => {
+            showAlert(error.message, 'error');
+        });
+}
+
+// عرض بيانات المشترك
+function displaySubscriberData(data) {
+    document.getElementById('scanner-subscriber-id').textContent = data.subscriber_id;
+    document.getElementById('scanner-subscriber-name').textContent = data.name;
+    document.getElementById('scanner-subscription-type').textContent = data.subscription_type;
+    document.getElementById('scanner-status').textContent = data.status;
+    document.getElementById('scanner-meals-remaining').textContent = `${data.meals_remaining} وجبات متبقية`;
+    
+    document.getElementById('scanner-customer-info').style.display = 'block';
+    document.getElementById('scanner-deduct-meal').style.display = 'block';
+    
+    // تخزين ID المشترك الحالي في الزر للاستخدام لاحقاً
+    document.getElementById('scanner-deduct-meal').setAttribute('data-subscriber-id', data.subscriber_id);
+    document.getElementById('scanner-deduct-meal').setAttribute('data-subscriber-name', data.name);
+    document.getElementById('scanner-deduct-meal').setAttribute('data-subscription-type', data.subscription_type);
+}
+
+// خصم وجبة من الماسح
+function deductMealFromScanner() {
+    const btn = this;
+    const subscriberId = btn.getAttribute('data-subscriber-id');
+    const subscriberName = btn.getAttribute('data-subscriber-name');
+    const subscriptionType = btn.getAttribute('data-subscription-type');
+    
+    if (confirm(`هل تريد خصم وجبة من ${subscriberName}؟`)) {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        fetch(`/newstart/api/subscribers/${subscriberId}/deduct-meal`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                subscriber_name: subscriberName,
+                subscription_type: subscriptionType,
+                actionUser: ACTIONUSER
+            }),
+        })
+        .then((response) => {
+            if (!response.ok) {
+                return response.json().then((err) => {
+                    throw new Error(err.error);
+                });
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                showAlert(`تم خصم وجبة بنجاح. الوجبات المتبقية: ${data.meals_remaining}`, "success");
+                document.getElementById('scanner-meals-remaining').textContent = `${data.meals_remaining} وجبات متبقية`;
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showAlert(`حدث خطأ أثناء خصم الوجبة: ${error.message}`, "error");
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+    }
+}
+
+// إعادة تعيين الماسح
+function resetScanner() {
+    document.getElementById('scanner-customer-info').style.display = 'none';
+    document.getElementById('scanner-deduct-meal').style.display = 'none';
+    document.getElementById('subscriber-search').value = '';
+    stopScanner();
 }
 // إضافة مستمع الحدث لاختيار الملف
 document.getElementById('restoreFileSelect').addEventListener('change', updateRestorePreview);
