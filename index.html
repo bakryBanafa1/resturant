@@ -3264,7 +3264,7 @@ async function confirmDelete() {
 
         switch (currentDeleteType) {
             case 'subscriber':
-                deleteUrl = `/newstart/api/subscribers/${currentDeleteId}`;
+                deleteUrl = `/newstart/api/delete-subscriber/${currentDeleteId}`;
                 deleteBody = { actionUser: ACTIONUSER };
                 break;
             case 'package':
