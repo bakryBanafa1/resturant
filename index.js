@@ -459,7 +459,7 @@ app.get("/newstart/api/subscribers/:id", (req, res) => {
         },
     );
 });
-app.delete("/newstart/api/subscribers/:id", (req, res) => {
+app.delete("/newstart/api/delete-subscriber/:id", (req, res) => {
     const username = req.body.actionUser || "System";
 
     db.get("SELECT name FROM subscribers WHERE subscriber_id = ?", [req.params.id], (err, row) => {
