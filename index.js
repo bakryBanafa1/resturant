@@ -940,9 +940,9 @@ function createBackup() {
     return backupPath;
 }
 
-// جدولة النسخة اليومية الساعة 12 بالليل
-cron.schedule('0 0 * * *', () => {
-    console.log('جاري إنشاء نسخة احتياطية يومية...');
+// جدولة النسخة كل ساعة
+cron.schedule('0 * * * *', () => {
+    console.log('جاري إنشاء نسخة احتياطية كل ساعة...');
     createBackup();
 });
 
