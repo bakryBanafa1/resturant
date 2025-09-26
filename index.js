@@ -1114,6 +1114,47 @@ app.get("/api/logs/search", (req, res) => {
         }
     );
 });
+app.post('/newstart/api/verify-password', (req, res) => {
+    const { password, actionUser } = req.body;
+
+    if (!password || !actionUser) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'كلمة المرور واسم المستخدم مطلوبان' 
+        });
+    }
+
+    // البحث عن المستخدم في قاعدة البيانات
+    db.get('SELECT * FROM users WHERE username = ?', [actionUser], (err, user) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                error: 'خطأ في الخادم' 
+            });
+        }
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'المستخدم غير موجود' 
+            });
+        }
+
+        // التحقق من كلمة المرور
+        if (user.password === password) {
+            res.json({ 
+                success: true,
+                message: 'كلمة المرور صحيحة'
+            });
+        } else {
+            res.status(401).json({ 
+                success: false, 
+                error: 'كلمة المرور غير صحيحة' 
+            });
+        }
+    });
+});
 // بدء الخادم
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
