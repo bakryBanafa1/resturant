@@ -777,6 +777,23 @@
         display: none;
     }
 }
+
+#deleteConfirmModal .modal-content {
+    max-width: 400px;
+    margin: 10% auto;
+}
+
+#deleteConfirmMessage {
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
         </style>
     </head>
     <body>
@@ -1091,6 +1108,36 @@
                         </table>
                     </div>
                 </div>
+                <!-- نافذة تأكيد الحذف بكلمة المرور -->
+<div id="deleteConfirmModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">تأكيد الحذف</h3>
+            <button class="close-btn" onclick="closeDeleteConfirmModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>تحذير:</strong> هذه العملية لا يمكن التراجع عنها.
+            </div>
+            <p id="deleteConfirmMessage">الرجاء إدخال كلمة المرور لتأكيد الحذف:</p>
+            <div class="form-group">
+                <label for="deletePassword">كلمة المرور:</label>
+                <input type="password" id="deletePassword" class="form-control" 
+                       placeholder="أدخل كلمة المرور الخاصة بك">
+                <div id="passwordError" class="alert alert-error" style="display: none; margin-top: 10px;"></div>
+            </div>
+        </div>
+        <div class="modal-footer" style="text-align: left;">
+            <button class="btn btn-danger" onclick="confirmDelete()" id="confirmDeleteBtn">
+                <i class="fas fa-trash"></i> تأكيد الحذف
+            </button>
+            <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()">
+                <i class="fas fa-times"></i> إلغاء
+            </button>
+        </div>
+    </div>
+</div>
                 <!-- قسم التقارير -->
                 <div id="reportsContent" class="section" style="display: none">
     <div class="section-header">
@@ -1834,6 +1881,11 @@
                     .addEventListener("click", () =>
                         showSection("subscribersContent"),
                     );
+                    document.getElementById('deletePassword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        confirmDelete();
+    }
+});
                /* document
                     .getElementById("menuTab")
                     .addEventListener("click", () =>
@@ -2217,7 +2269,7 @@ window.resetUserFilter = resetUserFilter;
                                 <button class="action-btn btn-edit" onclick="editSubscriber(${sub.subscriber_id})">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="action-btn btn-delete" onclick="deleteSubscriber(${sub.subscriber_id})">
+                              <button class="action-btn btn-delete" onclick="deleteSubscriber(${sub.subscriber_id})">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <button class="action-btn btn-deduct" 
@@ -2807,6 +2859,27 @@ async function deleteRequestSilently(id) {
             const userSession = sessionStorage.getItem("user");
 const user = JSON.parse(userSession);
 
+// عند الضغط على زر خصم وجبة
+function deductMeal(subscriberId, subscriberName, subscriptionType) {
+    fetch(`/newstart/api/subscribers/${subscriberId}/deduct-meal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            subscriber_name: subscriberName,
+            subscription_type: subscriptionType,
+            username: user.username   // 👈 هنا نرسل اسم المستخدم
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("تم الخصم بواسطة: " + user.username);
+        } else {
+            alert("خطأ: " + data.error);
+        }
+    })
+    .catch(err => console.error("Error:", err));
+}
 
             function generateQR(id, name) {
                 const qrModal = document.getElementById("qrModal");
@@ -3083,7 +3156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     });
             }
-            function deleteSubscriber(id) {
+         /*   function deleteSubscriber(id) {
     if (confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
         const btn = event.target.closest("button");
         const originalHtml = btn.innerHTML;
@@ -3118,6 +3191,142 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 }
+    */
+   let currentDeleteId = null;
+let currentDeleteType = null; // 'subscriber', 'package', 'user'
+let currentDeleteData = null;
+
+function deleteSubscriber(id) {
+    currentDeleteId = id;
+    currentDeleteType = 'subscriber';
+    
+    // جلب بيانات المشترك لعرضها في رسالة التأكيد
+    fetch(`/newstart/api/subscribers/${id}`)
+        .then(response => response.json())
+        .then(subscriber => {
+            currentDeleteData = subscriber;
+            document.getElementById('deleteConfirmMessage').innerHTML = 
+                `هل أنت متأكد من حذف المشترك <strong>${subscriber.name}</strong> (رقم: ${subscriber.phone})؟<br>الرجاء إدخال كلمة المرور للتأكيد:`;
+            document.getElementById('deleteConfirmModal').style.display = 'block';
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error fetching subscriber:', error);
+            showAlert('حدث خطأ أثناء تحميل بيانات المشترك', 'error');
+        });
+}
+function closeDeleteConfirmModal() {
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+    currentDeleteId = null;
+    currentDeleteType = null;
+    currentDeleteData = null;
+    document.getElementById('deletePassword').value = '';
+    document.getElementById('passwordError').style.display = 'none';
+}
+
+async function confirmDelete() {
+    const password = document.getElementById('deletePassword').value;
+    const errorDiv = document.getElementById('passwordError');
+    
+    if (!password) {
+        errorDiv.textContent = 'الرجاء إدخال كلمة المرور';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+    btn.disabled = true;
+
+    try {
+        // التحقق من كلمة المرور أولاً
+        const verifyResponse = await fetch('/newstart/api/verify-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                password: password,
+                actionUser: ACTIONUSER
+            })
+        });
+
+        const verifyResult = await verifyResponse.json();
+
+        if (!verifyResult.success) {
+            throw new Error(verifyResult.error || 'كلمة المرور غير صحيحة');
+        }
+
+        // إذا كانت كلمة المرور صحيحة، المضي في الحذف
+        let deleteUrl, deleteBody;
+
+        switch (currentDeleteType) {
+            case 'subscriber':
+                deleteUrl = `/newstart/api/subscribers/${currentDeleteId}`;
+                deleteBody = { actionUser: ACTIONUSER };
+                break;
+            case 'package':
+                deleteUrl = `/newstart/api/packages/${currentDeleteId}`;
+                deleteBody = { actionUser: ACTIONUSER };
+                break;
+            case 'user':
+                deleteUrl = `/newstart/api/users/${currentDeleteId}`;
+                deleteBody = { actionUser: ACTIONUSER };
+                break;
+            default:
+                throw new Error('نوع الحذف غير معروف');
+        }
+
+        const deleteResponse = await fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(deleteBody)
+        });
+
+        if (!deleteResponse.ok) {
+            const errorData = await deleteResponse.json();
+            throw new Error(errorData.error || 'فشل في عملية الحذف');
+        }
+
+        const deleteResult = await deleteResponse.json();
+
+        if (deleteResult.success) {
+            showAlert('تم الحذف بنجاح', 'success');
+            closeDeleteConfirmModal();
+            
+            // إعادة تحميل البيانات حسب النوع
+            switch (currentDeleteType) {
+                case 'subscriber':
+                    loadSubscribers();
+                    break;
+                case 'package':
+                    loadPackages();
+                    break;
+                case 'user':
+                    loadUsers();
+                    break;
+            }
+        } else {
+            throw new Error(deleteResult.error || 'فشل في عملية الحذف');
+        }
+
+    } catch (error) {
+        console.error('Error during delete:', error);
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// جعل الدوال متاحة عالمياً
+window.closeDeleteConfirmModal = closeDeleteConfirmModal;
+window.confirmDelete = confirmDelete;
             function deductMeal(
                 subscriberId,
                 subscriberName,
