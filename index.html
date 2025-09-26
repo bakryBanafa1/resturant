@@ -2802,50 +2802,11 @@ async function deleteRequestSilently(id) {
                     );
             }
 */
-            function deleteSubscriber(id) {
-                if (confirm("هل أنت متأكد من حذف هذا المشترك؟")) {
-                    fetch(`/newstart/api/subscribers/${id}`, {
-                        method: "DELETE",
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                loadSubscribers();
-                                showAlert("تم حذف المشترك بنجاح", "success");
-                            } else {
-                                throw new Error("Failed to delete subscriber");
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error:", error);
-                            showAlert("حدث خطأ أثناء حذف المشترك", "error");
-                        });
-                }
-            }
+          
 
             const userSession = sessionStorage.getItem("user");
 const user = JSON.parse(userSession);
 
-// عند الضغط على زر خصم وجبة
-function deductMeal(subscriberId, subscriberName, subscriptionType) {
-    fetch(`/newstart/api/subscribers/${subscriberId}/deduct-meal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            subscriber_name: subscriberName,
-            subscription_type: subscriptionType,
-            username: user.username   // 👈 هنا نرسل اسم المستخدم
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert("تم الخصم بواسطة: " + user.username);
-        } else {
-            alert("خطأ: " + data.error);
-        }
-    })
-    .catch(err => console.error("Error:", err));
-}
 
             function generateQR(id, name) {
                 const qrModal = document.getElementById("qrModal");
